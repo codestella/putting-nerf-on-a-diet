@@ -18,10 +18,10 @@ We will also upload our project on the Hugging Face Hub Repository.
 
 | Teams            | Members                                                                                                                                                        |
 |------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| NeRF Team        | Leader : [JY Chung](https://github.com/robot0321), Members : [Stella Yang](https://github.com/codestella), [Alex lau](https://github.com/riven314), [hassiahk](https://github.com/hassiahk)                                                        |
-| CLIP Team        | Leader : [Sunghyun Kim](https://github.com/MrBananaHuman), Members : [Seunghyun Lee](https://github.com/sseung0703), [sasikanth](https://github.com/ksasi), [Khali Sifullah](https://github.com/khalidsaifullaah)                                 |
-| Cloud TPU Team   | Leader : [Alex lau](https://github.com/riven314), Members : [JY Chung](https://github.com/robot0321), [Sunghyun Kim](https://github.com/MrBananaHuman), [masapasa](https://github.com/masapasa)                                                     |
-| Project Managing | [Stella Yang](https://github.com/codestella) To watch the project progress, please check [our project notion](https://www.notion.so/Putting-NeRF-on-a-Diet-e0caecea0c2b40c3996c83205baf870d) |
+| NeRF Team        | Leader : [JaeYoung Chung](https://github.com/robot0321), Members : [Stella Yang](https://github.com/codestella), [Alex Lau](https://github.com/riven314), [hassiahk](https://github.com/hassiahk), [Hyunkyu Kim](https://github.com/minus31)           |
+| CLIP Team        | Leader : [Sunghyun Kim](https://github.com/MrBananaHuman), Members : [Seunghyun Lee](https://github.com/sseung0703), [Sasikanth Kotti](https://github.com/ksasi), [Khali Sifullah](https://github.com/khalidsaifullaah)                                 |
+| Cloud TPU Team   | Leader : [Alex Lau](https://github.com/riven314), Members : [JaeYoung Chung](https://github.com/robot0321), [Sunghyun Kim](https://github.com/MrBananaHuman), [masapasa](https://github.com/masapasa)                                                     |
+| Project Managing | [Stella Yang](https://github.com/codestella) To Watch Our Project Progress, Please Check [Our Project Notion](https://www.notion.so/Putting-NeRF-on-a-Diet-e0caecea0c2b40c3996c83205baf870d) |
 
 ## License
 [Apache License 2.0](https://github.com/codestella/putting-nerf-on-a-diet/blob/main/LICENSE)
