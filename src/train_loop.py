@@ -1,5 +1,3 @@
-import os
-import glob
 import pickle
 
 import imageio
@@ -10,7 +8,7 @@ from livelossplot import PlotLosses
 from tqdm import tqdm
 import matplotlib.pyplot as plt
 
-from step_utils import (update_network_weights, inner_update_steps, batch_size,
+from step_utils import (update_network_weights, inner_update_steps,
                         update_model_single, update_model, N_samples,
                         test_inner_steps, render_fn, psnr_fn,
                         batch_size, model, params, opt_state, inner_step_size, lr)
@@ -21,7 +19,7 @@ max_iters = 150000
 exp_name = f'{DATASET}_ius_{inner_update_steps}_ilr_{inner_step_size}_olr_{lr}_bs_{batch_size}'
 exp_dir = f'checkpoint/phototourism_checkpoints/{exp_name}/'
 
-plt_groups = {'Train PSNR':[], 'Test PSNR':[]}
+plt_groups = {'Train PSNR': [], 'Test PSNR': []}
 plotlosses_model = PlotLosses(groups=plt_groups)
 plt_groups['Train PSNR'].append(exp_name + f'_train')
 plt_groups['Test PSNR'].append(exp_name + f'_test')
@@ -49,9 +47,11 @@ for step in tqdm(range(max_iters)):
     if inner_update_steps == 1:
         rng, rng_input = random.split(rng)
         idx = random.randint(rng_input, shape=(batch_size,), minval=0, maxval=images.shape[0])
-        rng, params, opt_state, loss = update_model_single(rng, params, opt_state, images[idx, :], rays[:, idx, :], bds)
+        rng, params, opt_state, loss = update_model_single(step, rng, params, opt_state,
+                                                           images[idx, :], rays[:, idx, :], bds)
     else:
-        rng, params, opt_state, loss = update_model(rng, params, opt_state, images, rays, bds)
+        rng, params, opt_state, loss = update_model(step, rng, params, opt_state,
+                                                    images, rays, bds)
     train_psnrs.append(-10 * np.log10(loss))
 
     if step % 250 == 0:
