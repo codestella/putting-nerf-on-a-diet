@@ -6,8 +6,8 @@ import flax.linen as nn
 class Model(nn.Module):   
     width = 256
     depth = 6
-    use_viewdirs = False
 
+    @nn.compact
     def __call__(self, coords):
         sh = coords.shape
         coords = np.reshape(coords, [-1 ,3])
