@@ -14,9 +14,11 @@ inner_update_steps = 64
 N_samples = 128
 test_inner_steps = 64
 
-rng = jax.random.PRNGKey(0)
-model = hk.without_apply_rng(hk.transform(lambda x: Model()(x)))
-params = model.init(rng, np.ones((1,3)))
+model = Model()
+key1, key2 = random.split(jax.random.PRNGKey(0))
+dummy_x = random.normal(key1, (1, 3))
+params = model.init(key2, dummy_x)
+
 opt_init, opt_update, get_params = optimizers.adam(lr)
 opt_state = opt_init(params)
 
