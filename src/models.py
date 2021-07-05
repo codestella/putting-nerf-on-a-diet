@@ -18,9 +18,9 @@ class Model(nn.Module):
         ], axis=-1) for i in np.linspace(0, 8, 20)], axis=-1)
 
         for idx in range(self.depth - 1):
-            x = nn.Dense(output_size=self.width, name=f"fc{idx}")(x)
+            x = nn.Dense(self.width, name=f"fc{idx}")(x)
             x = nn.relu(x)
 
-        out = nn.Dense(output_size=4, name="fc_last")(x)
+        out = nn.Dense(4, name="fc_last")(x)
         out = np.reshape(out, list(sh[:-1]) + [4])
         return out
