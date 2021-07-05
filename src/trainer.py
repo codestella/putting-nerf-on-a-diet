@@ -57,7 +57,7 @@ class trainer :
     def update_network_weights(self, rng, images, rays, params, inner_steps, bds):
         for _ in range(inner_steps):
             rng, rng_input = random.split(rng)
-            idx = random.randint(rng_input, shape=(self.batch_size,), minval=0, maxval=images.shape[0])
+            idx = random.randint(rng_input, shape=(self.args.batch_size,), minval=0, maxval=images.shape[0])
             image_sub = images[idx, :]
             rays_sub = rays[:, idx, :]
             rng, params, loss = self.single_step(rng, image_sub, rays_sub, params, bds)
