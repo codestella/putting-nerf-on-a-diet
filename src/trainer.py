@@ -155,7 +155,7 @@ class trainer :
 
                     test_images_flat = np.reshape(test_images, (-1, 3))
                     test_rays = np.reshape(test_rays, (2, -1, 3))
-                    # Training Fewhot image
+                    # Training Fewshot image
                     rng, test_params, test_inner_loss = self.update_network_weights(rng, test_images_flat, test_rays, self.params,
                                                                                self.args.test_inner_steps, bds)
 
