@@ -42,7 +42,7 @@ class trainer :
     @jit
     def single_step(self, rng, image, rays, params, bds):
         def sgd(param, update):
-            return param - self.inner_step_size * update
+            return param - self.args.inner_step_size * update
 
         rng, rng_inputs = jax.random.split(rng)
 
