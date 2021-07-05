@@ -1,26 +1,6 @@
 import jax
 import jax.numpy as np
 from jax import jit, random
-from jax.experimental import optimizers
-import haiku as hk
-
-from models import Model
-
-
-lr = 5e-4
-batch_size = 64
-inner_step_size = 1
-inner_update_steps = 64
-N_samples = 128
-test_inner_steps = 64
-
-model = Model()
-key1, key2 = random.split(jax.random.PRNGKey(0))
-dummy_x = random.normal(key1, (1, 3))
-params = model.init(key2, dummy_x)
-
-opt_init, opt_update, get_params = optimizers.adam(lr)
-opt_state = opt_init(params)
 
 
 def render_fn(rnd_input, model, params, bvals, rays, near, far, N_samples, rand):
@@ -81,57 +61,6 @@ def render_rays(rnd_input, model, params,
     depth_map = np.sum(weights * z_vals, -1)
 
     return rgb_map, depth_map, acc_map
-
-
-@jit
-def single_step(rng, image, rays, params, bds):
-    def sgd(param, update):
-        return param - inner_step_size * update
-
-    rng, rng_inputs = jax.random.split(rng)
-
-    def loss_model(params):
-        g = render_rays(rng_inputs, model, params, None, rays, bds[0], bds[1], N_samples, rand=True)
-        return mse_fn(g, image)
-
-    model_loss, grad = jax.value_and_grad(loss_model)(params)
-    new_params = jax.tree_multimap(sgd, params, grad)
-    return rng, new_params, model_loss
-
-
-def update_network_weights(rng, images, rays, params, inner_steps, bds):
-    for _ in range(inner_steps):
-        rng, rng_input = random.split(rng)
-        idx = random.randint(rng_input, shape=(batch_size,), minval=0, maxval=images.shape[0])
-        image_sub = images[idx, :]
-        rays_sub = rays[:, idx, :]
-        rng, params, loss = single_step(rng, image_sub, rays_sub, params, bds)
-    return rng, params, loss
-
-
-def update_model(step, rng, params, opt_state, image, rays, bds):
-    rng, new_params, model_loss = update_network_weights(rng, image, rays, params, inner_update_steps, bds)
-
-    def calc_grad(params, new_params):
-        return params - new_params
-
-    model_grad = jax.tree_multimap(calc_grad, params, new_params)
-    opt_state = opt_update(step, model_grad, opt_state)
-    params = get_params(opt_state)
-    return rng, params, opt_state, model_loss
-
-
-@jit
-def update_model_single(step, rng, params, opt_state, image, rays, bds):
-
-    def calc_grad(params, new_params):
-        return params - new_params
-
-    rng, new_params, model_loss = single_step(rng, image, rays, params, bds)
-    model_grad = jax.tree_multimap(calc_grad, params, new_params)
-    opt_state = opt_update(step, model_grad, opt_state)
-    params = get_params(opt_state)
-    return rng, params, opt_state, model_loss
 
 
 # optimize render_fn_inner by JIT (func in, func out)
