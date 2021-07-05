@@ -7,9 +7,8 @@ from jax import jit
 
 
 DATASET = 'sacre'
-posedir = f'/mnt/hdd1/stella/inerf/learnit_Data/phototourism/original/sacre/' # Directory condtains [bds.npy, c2w_mats.npy, kinv_mats.npy, res_mats.npy]
+posedir = f'/mnt/hdd1/stella/inerf/learnit_Data/phototourism/sacre' # Directory condtains [bds.npy, c2w_mats.npy, kinv_mats.npy, res_mats.npy]
 imgdir = f'/mnt/hdd1/stella/inerf/learnit_Data/phototourism/original/sacre/sacre_coeur/dense/images/' # Directory of images
-
 posedata = {}
 for f in os.listdir(posedir):
     if '.npy' not in f:
