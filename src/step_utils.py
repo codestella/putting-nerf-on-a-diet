@@ -63,14 +63,14 @@ def render_rays(rnd_input, model, params,
     return rgb_map, depth_map, acc_map
 
 @jit
-def single_step(self, rng, image, rays, params, bds, inner_step_size, N_samples):
+def single_step(rng, image, rays, params, bds, inner_step_size, N_samples, model):
     def sgd(param, update):
         return param - inner_step_size * update
 
     rng, rng_inputs = jax.random.split(rng)
 
     def loss_model(params):
-        g = self.render_rays(rng_inputs, self.model, params, None, rays, bds[0], bds[1], N_samples, rand=True)
+        g = render_rays(rng_inputs, model, params, None, rays, bds[0], bds[1], N_samples, rand=True)
         return mse_fn(g, image)
 
     model_loss, grad = jax.value_and_grad(loss_model)(params)

@@ -45,7 +45,7 @@ class trainer :
             idx = random.randint(rng_input, shape=(self.args.batch_size,), minval=0, maxval=images.shape[0])
             image_sub = images[idx, :]
             rays_sub = rays[:, idx, :]
-            rng, params, loss = single_step(rng, image_sub, rays_sub, params, bds, self.args.inner_step_size, self.args.N_samples)
+            rng, params, loss = single_step(rng, image_sub, rays_sub, params, bds, self.args.inner_step_size, self.args.N_samples, self.model)
         return rng, params, loss
 
     def update_model(self, step, rng, params, opt_state, image, rays, bds):
@@ -65,7 +65,7 @@ class trainer :
         def calc_grad(params, new_params):
             return params - new_params
 
-        rng, new_params, model_loss = single_step(rng, image, rays, params, bds, self.args.inner_step_size, self.args.N_samples)
+        rng, new_params, model_loss = single_step(rng, image, rays, params, bds, self.args.inner_step_size, self.args.N_samples, self.model)
         model_grad = jax.tree_multimap(calc_grad, params, new_params)
         opt_state = self.opt_update(step, model_grad, opt_state)
         params = self.get_params(opt_state)
