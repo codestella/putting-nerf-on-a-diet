@@ -15,6 +15,7 @@ from step_utils import (update_network_weights, inner_update_steps,
 from data_utils import DATASET, get_example, imgfiles, posedata, poses_avg, render_path_spiral, get_rays
 
 
+# TODO need some hyperparam args parser
 max_iters = 150000
 exp_name = f'{DATASET}_ius_{inner_update_steps}_ilr_{inner_step_size}_olr_{lr}_bs_{batch_size}'
 exp_dir = f'checkpoint/phototourism_checkpoints/{exp_name}/'
@@ -25,13 +26,14 @@ plt_groups['Train PSNR'].append(exp_name + f'_train')
 plt_groups['Test PSNR'].append(exp_name + f'_test')
 step = 0
 
-train_psnrs = []
-rng = jax.random.PRNGKey(0)
 
+rng = jax.random.PRNGKey(0)
+train_psnrs = []
 train_steps = []
 train_psnrs_all = []
 test_steps = []
 test_psnrs_all = []
+
 for step in tqdm(range(max_iters)):
     try:
         rng, rng_input = jax.random.split(rng)
@@ -44,6 +46,7 @@ for step in tqdm(range(max_iters)):
     images = np.reshape(images, (-1, 3))
     rays = np.reshape(rays, (2, -1, 3))
 
+    # TODO don't need single
     if inner_update_steps == 1:
         rng, rng_input = random.split(rng)
         idx = random.randint(rng_input, shape=(batch_size,), minval=0, maxval=images.shape[0])
@@ -65,19 +68,22 @@ for step in tqdm(range(max_iters)):
         for ti in range(5):
             test_images, test_rays, bds = get_example(ti, split='val', downsample=2)
 
+            # TODO need pack into test image loader, need to to change Only Use Fewshot
             test_images, test_holdout_images = np.split(test_images, [test_images.shape[1] // 2], axis=1)
             test_rays, test_holdout_rays = np.split(test_rays, [test_rays.shape[2] // 2], axis=2)
 
             test_images_flat = np.reshape(test_images, (-1, 3))
             test_rays = np.reshape(test_rays, (2, -1, 3))
 
+            #Training Fewhot image
             rng, test_params, test_inner_loss = update_network_weights(rng, test_images_flat, test_rays, params,
                                                                        test_inner_steps, bds)
-
+            #Rendering part
             test_result = np.clip(
                 render_fn(rng, model, test_params, None, test_holdout_rays, bds[0], bds[1], N_samples, rand=False)[0],
                 0, 1)
             test_psnr.append(psnr_fn(test_holdout_images, test_result))
+
         test_psnr = np.mean(np.array(test_psnr))
 
         test_steps.append(step)
@@ -96,21 +102,26 @@ for step in tqdm(range(max_iters)):
         plt.show()
 
     if step % 10000 == 0 and step != 0:
+
+
         test_images, test_rays, bds = get_example(0, split='test')
         test_images_flat = np.reshape(test_images, (-1, 3))
         test_rays = np.reshape(test_rays, (2, -1, 3))
+        #training
         rng, test_params_1, test_inner_loss = update_network_weights(rng, test_images_flat, test_rays, params,
                                                                      test_inner_steps, bds)
 
         test_images, test_rays, bds = get_example(1, split='test')
         test_images_flat = np.reshape(test_images, (-1, 3))
         test_rays = np.reshape(test_rays, (2, -1, 3))
+        #training
         rng, test_params_2, test_inner_loss = update_network_weights(rng, test_images_flat, test_rays, params,
                                                                      test_inner_steps, bds)
 
         poses = posedata['c2w_mats']
         c2w = poses_avg(poses)
         focal = .8
+        # TODO Please consider this function when sampling a spherical pose
         render_poses = render_path_spiral(c2w, c2w[:3, 1], [.1, .1, .05], focal, zrate=.5, rots=2, N=120)
 
         bds = np.array([5., 25.]) * .05
@@ -124,6 +135,7 @@ for step in tqdm(range(max_iters)):
         ]).reshape([3, 3])
         i, j = np.meshgrid(np.arange(0, W), np.arange(0, H), indexing='xy')
         renders = []
+
         for p, c2w in enumerate(tqdm(render_poses)):
             rays = get_rays(c2w, kinv, i, j)
             interp = p / len(render_poses)
@@ -133,6 +145,7 @@ for step in tqdm(range(max_iters)):
             renders.append(result)
 
         renders = (np.clip(np.array(renders), 0, 1) * 255).astype(np.uint8)
+
         imageio.mimwrite(f'{exp_dir}render_sprial_{step}.mp4', renders, fps=30, quality=8)
 
         plt.plot(train_steps, train_psnrs_all)
