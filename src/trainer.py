@@ -4,7 +4,7 @@ import pickle
 from tqdm import tqdm
 import imageio
 import glob
-from models import Model
+from src.models import Model
 import jax
 import jax.numpy as np
 from jax import jit, random
@@ -12,8 +12,8 @@ from jax.experimental import optimizers
 from livelossplot import PlotLosses
 import matplotlib.pyplot as plt
 
-from step_utils import (render_fn, psnr_fn, mse_fn)
-from data_utils import poses_avg, render_path_spiral, get_rays
+from src.step_utils import (render_fn, psnr_fn, mse_fn)
+from src.data_utils import poses_avg, render_path_spiral, get_rays
 
 
 class trainer :
