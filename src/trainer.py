@@ -138,7 +138,7 @@ class trainer :
         for step in tqdm(range(self.args.max_iters)):
             try:
                 rng, rng_input = random.split(rng)
-                img_idx = random.randint(rng_input, shape=(), minval=0, maxval=len(imgfiles) - 25)
+                img_idx = random.randint(rng_input, shape=(), minval=0, maxval=len(self.imgfiles) - 25)
                 images, rays, bds = self.get_example(img_idx, downsample=1)
             except:
                 print('data loading error')
