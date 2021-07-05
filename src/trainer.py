@@ -27,18 +27,17 @@ class trainer :
         opt_init, self.opt_update, self.get_params = optimizers.adam(args.lr)
         self.opt_state = opt_init(self.params)
         self.loss = 1e5
-        posedata = {}
+        self.posedata = {}
         for f in os.listdir(self.args.posedir):
             if '.npy' not in f:
                 continue
             z = np.load(os.path.join(self.args.posedir, f))
-            posedata[f.split('.')[0]] = z
+            self.posedata[f.split('.')[0]] = z
 
         imgfiles = sorted(glob.glob(self.args.imgdir + '/*.jpg'))
         print(f'{len(imgfiles)} images')
-        print('Pose data loaded - ', posedata.keys())
-        imgfiles = sorted(glob.glob(self.args.imgdir + '/*.jpg'))
-
+        print('Pose data loaded - ', self.posedata.keys())
+        self.imgfiles = sorted(glob.glob(self.args.imgdir + '/*.jpg'))
 
     @jit
     def single_step(self, rng, image, rays, params, bds):
@@ -87,7 +86,7 @@ class trainer :
         params = self.get_params(opt_state)
         return rng, params, opt_state, model_loss
 
-    def get_example(img_idx, split='train', downsample=4):
+    def get_example(self, img_idx, split='train', downsample=4):
         sc = .05
 
         # first 20 are test, next 5 are validation, the rest are training:
@@ -98,16 +97,16 @@ class trainer :
             img_idx = img_idx + 20
 
         # uint8 --> float
-        img = imageio.imread(imgfiles[img_idx])[..., :3] / 255.
+        img = imageio.imread(self.imgfiles[img_idx])[..., :3] / 255.
 
         # WHAT DO THESE MATRICES MEAN???
         # (4, 4)
-        c2w = posedata['c2w_mats'][img_idx]
+        c2w = self.posedata['c2w_mats'][img_idx]
         # (3, 3)
-        kinv = posedata['kinv_mats'][img_idx]
+        kinv = self.posedata['kinv_mats'][img_idx]
         c2w = np.concatenate([c2w[:3, :3], c2w[:3, 3:4] * sc], -1)
         # (2, )
-        bds = posedata['bds'][img_idx] * np.array([.9, 1.2]) * sc
+        bds = self.posedata['bds'][img_idx] * np.array([.9, 1.2]) * sc
         H, W = img.shape[:2]
 
         # (0, 4, 8, ..., H)
@@ -140,7 +139,7 @@ class trainer :
             try:
                 rng, rng_input = random.split(rng)
                 img_idx = random.randint(rng_input, shape=(), minval=0, maxval=len(imgfiles) - 25)
-                images, rays, bds = get_example(img_idx, downsample=1)
+                images, rays, bds = self.get_example(img_idx, downsample=1)
             except:
                 print('data loading error')
                 raise
@@ -164,7 +163,7 @@ class trainer :
                 test_psnr = []
                 for ti in range(5):
                     # TODO need pack into test image loader, need to to change Only Use Fewshot
-                    test_images, test_rays, bds = get_example(ti, split='val', downsample=2)
+                    test_images, test_rays, bds = self.get_example(ti, split='val', downsample=2)
 
                     test_images, test_holdout_images = np.split(test_images, [test_images.shape[1] // 2], axis=1)
                     test_rays, test_holdout_rays = np.split(test_rays, [test_rays.shape[2] // 2], axis=2)
@@ -199,21 +198,21 @@ class trainer :
                 plt.savefig(os.path.join(temp_eval_result_dir, "{:06d}.png".format(step)))
 
             if step % 10000 == 0 and step != 0:
-                test_images, test_rays, bds = get_example(0, split='test')
+                test_images, test_rays, bds = self.get_example(0, split='test')
                 test_images_flat = np.reshape(test_images, (-1, 3))
                 test_rays = np.reshape(test_rays, (2, -1, 3))
                 # training 1
                 rng, test_params_1, test_inner_loss = self.update_network_weights(rng, test_images_flat, test_rays, self.params,
                                                                              self.args.test_inner_steps, bds)
 
-                test_images, test_rays, bds = get_example(1, split='test')
+                test_images, test_rays, bds = self.get_example(1, split='test')
                 test_images_flat = np.reshape(test_images, (-1, 3))
                 test_rays = np.reshape(test_rays, (2, -1, 3))
                 # training 2
                 rng, test_params_2, test_inner_loss = self.update_network_weights(rng, test_images_flat, test_rays, self.params,
                                                                              self.args.test_inner_steps, bds)
 
-                poses = posedata['c2w_mats']
+                poses = self.posedata['c2w_mats']
                 c2w = poses_avg(poses)
                 # TODO Need to change this rendering info with different dataset
                 focal = .8
