@@ -1,7 +1,7 @@
 import jax
 import jax.numpy as np
 from jax import jit, random
-from jax.experimental import optix
+from jax.experimental import optimizers
 import haiku as hk
 
 from models import Model
@@ -14,11 +14,13 @@ inner_update_steps = 64
 N_samples = 128
 test_inner_steps = 64
 
-rng = jax.random.PRNGKey(0)
-model = hk.without_apply_rng(hk.transform(lambda x: Model()(x)))
-params = model.init(rng, np.ones((1,3)))
-opt = optix.adam(lr)
-opt_state = opt.init(params)
+model = Model()
+key1, key2 = random.split(jax.random.PRNGKey(0))
+dummy_x = random.normal(key1, (1, 3))
+params = model.init(key2, dummy_x)
+
+opt_init, opt_update, get_params = optimizers.adam(lr)
+opt_state = opt_init(params)
 
 
 def render_fn(rnd_input, model, params, bvals, rays, near, far, N_samples, rand):
@@ -103,35 +105,32 @@ def update_network_weights(rng, images, rays, params, inner_steps, bds):
         idx = random.randint(rng_input, shape=(batch_size,), minval=0, maxval=images.shape[0])
         image_sub = images[idx, :]
         rays_sub = rays[:, idx, :]
-
         rng, params, loss = single_step(rng, image_sub, rays_sub, params, bds)
     return rng, params, loss
 
 
-def update_model(rng, params, opt_state, image, rays, bds):
+def update_model(step, rng, params, opt_state, image, rays, bds):
     rng, new_params, model_loss = update_network_weights(rng, image, rays, params, inner_update_steps, bds)
 
     def calc_grad(params, new_params):
         return params - new_params
 
     model_grad = jax.tree_multimap(calc_grad, params, new_params)
-
-    updates, opt_state = opt.update(model_grad, opt_state)
-    params = optix.apply_updates(params, updates)
+    opt_state = opt_update(step, model_grad, opt_state)
+    params = get_params(opt_state)
     return rng, params, opt_state, model_loss
 
 
 @jit
-def update_model_single(rng, params, opt_state, image, rays, bds):
-    rng, new_params, model_loss = single_step(rng, image, rays, params, bds)
+def update_model_single(step, rng, params, opt_state, image, rays, bds):
 
     def calc_grad(params, new_params):
         return params - new_params
 
+    rng, new_params, model_loss = single_step(rng, image, rays, params, bds)
     model_grad = jax.tree_multimap(calc_grad, params, new_params)
-
-    updates, opt_state = opt.update(model_grad, opt_state)
-    params = optix.apply_updates(params, updates)
+    opt_state = opt_update(step, model_grad, opt_state)
+    params = get_params(opt_state)
     return rng, params, opt_state, model_loss
 
 
