@@ -10,7 +10,7 @@ from livelossplot import PlotLosses
 import matplotlib.pyplot as plt
 from jax import jit, random
 from src.step_utils import (render_fn, psnr_fn, mse_fn)
-
+import glob
 
 from src.data_utils import get_example, imgfiles, posedata, poses_avg, render_path_spiral, get_rays
 from models import Model
@@ -28,6 +28,17 @@ class trainer :
         opt_init, self.opt_update, self.get_params = optimizers.adam(args.lr)
         self.opt_state = opt_init(self.params)
         self.loss = 1e5
+        posedata = {}
+        for f in os.listdir(self.args.posedir):
+            if '.npy' not in f:
+                continue
+            z = np.load(os.path.join(self.args.posedir, f))
+            posedata[f.split('.')[0]] = z
+
+        imgfiles = sorted(glob.glob(self.args.imgdir + '/*.jpg'))
+        print(f'{len(imgfiles)} images')
+        print('Pose data loaded - ', posedata.keys())
+        imgfiles = sorted(glob.glob(self.args.imgdir + '/*.jpg'))
 
 
     @jit
@@ -76,6 +87,37 @@ class trainer :
         opt_state = self.opt_update(step, model_grad, opt_state)
         params = self.get_params(opt_state)
         return rng, params, opt_state, model_loss
+
+    def get_example(img_idx, split='train', downsample=4):
+        sc = .05
+
+        # first 20 are test, next 5 are validation, the rest are training:
+        # https://github.com/tancik/learnit/issues/3
+        if 'train' in split:
+            img_idx = img_idx + 25
+        if 'val' in split:
+            img_idx = img_idx + 20
+
+        # uint8 --> float
+        img = imageio.imread(imgfiles[img_idx])[..., :3] / 255.
+
+        # WHAT DO THESE MATRICES MEAN???
+        # (4, 4)
+        c2w = posedata['c2w_mats'][img_idx]
+        # (3, 3)
+        kinv = posedata['kinv_mats'][img_idx]
+        c2w = np.concatenate([c2w[:3, :3], c2w[:3, 3:4] * sc], -1)
+        # (2, )
+        bds = posedata['bds'][img_idx] * np.array([.9, 1.2]) * sc
+        H, W = img.shape[:2]
+
+        # (0, 4, 8, ..., H)
+        # WHAT ARE THE PURPOSES OF THIS MATRIX???
+        i, j = np.meshgrid(np.arange(0, W, downsample), np.arange(0, H, downsample), indexing='xy')
+
+        test_images = img[j, i]
+        test_rays = get_rays(c2w, kinv, i, j)
+        return test_images, test_rays, bds
 
     def train(self):
         step = 0
