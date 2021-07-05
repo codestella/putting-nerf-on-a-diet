@@ -9,10 +9,10 @@ import jax.numpy as np
 from livelossplot import PlotLosses
 import matplotlib.pyplot as plt
 from jax import jit, random
-from src.step_utils import (render_fn, psnr_fn, mse_fn)
+from step_utils import (render_fn, psnr_fn, mse_fn)
 import glob
 
-from src.data_utils import get_example, imgfiles, posedata, poses_avg, render_path_spiral, get_rays
+from data_utils import poses_avg, render_path_spiral, get_rays
 from models import Model
 from jax.experimental import optimizers
 
