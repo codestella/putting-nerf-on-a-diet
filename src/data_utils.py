@@ -127,8 +127,8 @@ def _parse_phototourism(pose_path, img_path):
             imgs.append(np.array(_im))
             # imgs.append(imageio.imread(imgfiles[iter])[..., :3] / 255.)
 
-        print(imageio.imread(imgfiles[iter]).shape)
-        print(imageio.imread(imgfiles[iter])[..., :3] / 255.)
+        print(_im.shape)
+        print(_im)
     
         imgdata[type] = np.array(imgs)
 
