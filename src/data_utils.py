@@ -125,13 +125,10 @@ def _parse_phototourism(pose_path, img_path):
             posedata[type][f.split('.')[0]] = z
             _im = imageio.imread(imgfiles[iter])[..., :3] / 255.
             imgs.append(np.array(_im))
-            # imgs.append(imageio.imread(imgfiles[iter])[..., :3] / 255.)
-
-        print(_im.shape)
-        print(_im)
-    
+            # imgs.append(imageio.imread(imgfiles[iter])[..., :3] / 255.)    
+            
         imgdata[type] = np.array(imgs)
-
+    
         # if imgs.shape[3]==4: # alpha channel
         #     imgdata[type] = imgs[...,:3] * imgs[...,-1:] + 1-imgs[...,-1:]
         # else:
