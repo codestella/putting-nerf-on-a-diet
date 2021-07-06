@@ -160,6 +160,8 @@ def data_loader(select_data, abspath, preload=True, down=1):
         temp_data_class = "pull-phototourism-images"
         pose_path = os.path.join(abspath, data_class, data_class, data_name) # Directory condtains [bds.npy, c2w_mats.npy, kinv_mats.npy, res_mats.npy]
         img_path = os.path.join(abspath, temp_data_class, data_name+'_coeur', 'dense', 'images') # Directory of images
+        print("\n====== \n pose path = ", pose_path, "\n ====== ")
+        print("\n====== \n img path = ", img_path, "\n ====== ")
         if preload:
             return _parse_phototourism(pose_path, img_path)
 
