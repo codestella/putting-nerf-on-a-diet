@@ -29,10 +29,8 @@ class trainer :
         
         self.imgdata, self.posedata = data_loader(args.select_data, args.datadir)
 
-        total_num_of_sample = self.imgdata['train'].shape[0] + self.imgdata['test'].shape[0] + self.imgdata['val'].shape[0]
-        print("train_samples: ", self.imgdata['train'].shape[0])
-
-        print(f'{total_num_of_sample} images')
+        self.total_num_of_sample = len(self.imgdata['train']) + len(self.imgdata['test']) + len(self.imgdata['val'])
+        print(f'{self.total_num_of_sample} images')
         print('Pose data loaded - ', self.posedata.keys())
 
     def update_network_weights(self, rng, images, rays, params, inner_steps, bds):
@@ -69,6 +67,7 @@ class trainer :
 
     def get_example(self, img_idx, split='train', downsample=4):
         sc = .05
+
         img = self.imgdata[split][img_idx]
         
         # (4, 4)
@@ -109,7 +108,7 @@ class trainer :
         for step in tqdm(range(self.args.max_iters)):
             try:
                 rng, rng_input = random.split(rng)
-                img_idx = random.randint(rng_input, shape=(), minval=0, maxval=len(self.imgfiles) - 25)
+                img_idx = random.randint(rng_input, shape=(), minval=0, maxval=self.total_num_of_sample - 25)
                 images, rays, bds = self.get_example(img_idx, downsample=1)
             except:
                 print('data loading error')
