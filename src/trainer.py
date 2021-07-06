@@ -67,6 +67,9 @@ class trainer :
 
     def get_example(self, img_idx, split='train', downsample=4):
         sc = .05
+
+        print("number of imgdata", split, len(self.imgdata[split]))
+        print("present_idx ", img_idx)
         img = self.imgdata[split][img_idx]
         
         # (4, 4)

@@ -107,7 +107,7 @@ def _parse_phototourism(pose_path, img_path):
 
     for type in ['train', 'test', 'val']:
         posedata[type] = {}
-        imgdata[type] = {}
+        # imgdata[type] = {}
         imgs = []
 
         if type == 'train':
