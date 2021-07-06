@@ -154,7 +154,7 @@ class trainer :
                 test_steps.append(step)
                 test_psnrs_all.append(test_psnr)
 
-                plotlosses_model.update({exp_name + '_test': test_psnr}, current_step=step)
+                plotlosses_model.update({exp_name + '_test': test_psnr}, Motivationscurrent_step=step)
                 plotlosses_model.send()
 
                 plt.figure(figsize=(15, 5))
