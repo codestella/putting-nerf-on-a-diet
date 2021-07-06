@@ -124,14 +124,14 @@ def _parse_phototourism(pose_path, img_path):
             z = np.load(os.path.join(pose_path, f))
             posedata[type][f.split('.')[0]] = z
 
-            imgs.append(imageio.imread(imgfiles[iter]))
-        
-        imgs = (np.array(imgs) / 255.).astype(np.float32)
+            imgs.append(imageio.imread(imgfiles[iter])[..., :3] / 255.
+)
+        imgdata[type] = np.array(imgs)
 
-        if imgs.shape[3]==4: # alpha channel
-            imgdata[type] = imgs[...,:3] * imgs[...,-1:] + 1-imgs[...,-1:]
-        else:
-            imgdata[type] = imgs
+        # if imgs.shape[3]==4: # alpha channel
+        #     imgdata[type] = imgs[...,:3] * imgs[...,-1:] + 1-imgs[...,-1:]
+        # else:
+        #     imgdata[type] = imgs
 
     return imgdata, posedata
 
@@ -145,8 +145,6 @@ def data_loader(select_data, abspath, preload=True, down=1):
     output:
         imgfiles
     '''
-
-    # abspath = '/mnt/disk2/JYChung/dataset/NeRF_Data'
 
     data_class, data_name = select_data.split('/')
 
