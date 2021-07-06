@@ -63,12 +63,12 @@ def _parse_nerf_synthetic(pose_path, img_path, down):
     posedata = {}
     imgdata = {}
 
-    for type in ['train', 'test', 'val']:
+    for split_type in ['train', 'test', 'val']:
         imgs, poses = [], []
-        posedata[type] = {}
-        imgdata[type] = {}
+        posedata[split_type] = {}
+        imgdata[split_type] = {}
 
-        with open(os.path.join(pose_path, 'transforms_'+type+'.json'), 'r') as fp:
+        with open(os.path.join(pose_path, 'transforms_'+split_type+'.json'), 'r') as fp:
             meta = json.load(fp)
 
         img0 = imageio.imread(os.path.join(img_path, 'r_0.png')) # to get H, W
@@ -91,11 +91,11 @@ def _parse_nerf_synthetic(pose_path, img_path, down):
         focal = .5 * W / np.tan(.5 * float(meta['camera_angle_x']))/down 
         kinv = np.array([[1/focal, 0., -cx/focal], [0., 1/focal, -cy/focal], [0., 0., 1.]])
         imgs = (np.array(imgs) / 255.).astype(np.float32)
-        imgdata[type] = imgs[...,:3] * imgs[...,-1:] + 1-imgs[...,-1:]
-        posedata[type]['c2w_mats'] = np.array(poses).astype(np.float32)
-        posedata[type]['kinv_mats'] = np.tile(kinv, (datalen, 1, 1))
-        posedata[type]['bds'] = np.tile(np.array([2.0, 6.0]), (datalen, 1))
-        posedata[type]['res_mats'] = np.tile(np.array([H, W]), (datalen, 1))
+        imgdata[split_type] = imgs[...,:3] * imgs[...,-1:] + 1-imgs[...,-1:]
+        posedata[split_type]['c2w_mats'] = np.array(poses).astype(np.float32)
+        posedata[split_type]['kinv_mats'] = np.tile(kinv, (datalen, 1, 1))
+        posedata[split_type]['bds'] = np.tile(np.array([2.0, 6.0]), (datalen, 1))
+        posedata[split_type]['res_mats'] = np.tile(np.array([H, W]), (datalen, 1))
 
     return imgdata, posedata
 
@@ -105,27 +105,27 @@ def _parse_phototourism(pose_path, img_path):
 
     imgfiles = sorted(glob.glob(img_path + '/*.jpg'))
 
-    for type in ['train', 'test', 'val']:
-        posedata[type] = {}
+    for split_type in ['train', 'test', 'val']:
+        posedata[split_type] = {}
         imgs = []
 
-        if type == 'train':
+        if split_type == 'train':
             start, end = 25, len(imgfiles)
-        elif type == 'test':
+        elif split_type == 'test':
             start, end = 0, 20
-        elif type == 'val':
+        elif split_type == 'val':
             start, end = 20, 25
 
         for i in range(start, end):
             imgs.append(np.array(imageio.imread(imgfiles[i])[..., :3] / 255.))
 
-        imgdata[type] = imgs
+        imgdata[split_type] = imgs
 
         for f in os.listdir(pose_path):
             if '.npy' not in f:
                 continue
             z = np.load(os.path.join(pose_path, f))
-            posedata[type][f.split('.')[0]] = z
+            posedata[split_type][f.split('.')[0]] = z
 
     return imgdata, posedata
 
