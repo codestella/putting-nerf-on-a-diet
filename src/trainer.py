@@ -12,7 +12,7 @@ from jax.experimental import optimizers
 from livelossplot import PlotLosses
 import matplotlib.pyplot as plt
 
-from src.step_utils import (render_fn, psnr_fn, mse_fn)
+from src.step_utils import (render_fn, psnr_fn, mse_fn, single_step)
 from src.data_utils import poses_avg, render_path_spiral, get_rays
 
 
@@ -39,28 +39,13 @@ class trainer :
         print('Pose data loaded - ', self.posedata.keys())
         self.imgfiles = sorted(glob.glob(self.args.imgdir + '/*.jpg'))
 
-    @jit
-    def single_step(self, rng, image, rays, params, bds):
-        def sgd(param, update):
-            return param - self.args.inner_step_size * update
-
-        rng, rng_inputs = jax.random.split(rng)
-
-        def loss_model(params):
-            g = self.render_rays(rng_inputs, self.model, params, None, rays, bds[0], bds[1], N_samples, rand=True)
-            return mse_fn(g, image)
-
-        model_loss, grad = jax.value_and_grad(loss_model)(params)
-        new_params = jax.tree_multimap(sgd, params, grad)
-        return rng, new_params, model_loss
-
     def update_network_weights(self, rng, images, rays, params, inner_steps, bds):
         for _ in range(inner_steps):
             rng, rng_input = random.split(rng)
             idx = random.randint(rng_input, shape=(self.args.batch_size,), minval=0, maxval=images.shape[0])
             image_sub = images[idx, :]
             rays_sub = rays[:, idx, :]
-            rng, params, loss = self.single_step(rng, image_sub, rays_sub, params, bds)
+            rng, params, loss = single_step(rng, image_sub, rays_sub, params, bds, self.args.inner_step_size, self.args.N_samples, self.model)
         return rng, params, loss
 
     def update_model(self, step, rng, params, opt_state, image, rays, bds):
@@ -80,7 +65,7 @@ class trainer :
         def calc_grad(params, new_params):
             return params - new_params
 
-        rng, new_params, model_loss = self.single_step(rng, image, rays, params, bds)
+        rng, new_params, model_loss = single_step(rng, image, rays, params, bds, self.args.inner_step_size, self.args.N_samples, self.model)
         model_grad = jax.tree_multimap(calc_grad, params, new_params)
         opt_state = self.opt_update(step, model_grad, opt_state)
         params = self.get_params(opt_state)
@@ -170,7 +155,7 @@ class trainer :
 
                     test_images_flat = np.reshape(test_images, (-1, 3))
                     test_rays = np.reshape(test_rays, (2, -1, 3))
-                    # Training Fewhot image
+                    # Training Fewshot image
                     rng, test_params, test_inner_loss = self.update_network_weights(rng, test_images_flat, test_rays, self.params,
                                                                                self.args.test_inner_steps, bds)
 

@@ -63,6 +63,23 @@ def render_rays(rnd_input, model, params,
     return rgb_map, depth_map, acc_map
 
 
+def single_step_wojit(rng, image, rays, params, bds, inner_step_size, N_samples, model):
+    def sgd(param, update):
+        return param - inner_step_size * update
+
+    rng, rng_inputs = jax.random.split(rng)
+
+    def loss_model(params):
+        g = render_rays(rng_inputs, model, params, None, rays, bds[0], bds[1], N_samples, rand=True)
+        return mse_fn(g, image)
+
+    model_loss, grad = jax.value_and_grad(loss_model)(params)
+    new_params = jax.tree_multimap(sgd, params, grad)
+    return rng, new_params, model_loss
+
+
+# nn.linen.Module is not jittable
+single_step = jit(single_step_wojit, static_argnums=[6, 7])
 # optimize render_fn_inner by JIT (func in, func out)
 render_fn_inner = jit(render_fn_inner, static_argnums=(1, 7, 8, 9))
 mse_fn = jit(lambda x, y: np.mean((x - y)**2))
