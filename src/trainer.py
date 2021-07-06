@@ -68,9 +68,6 @@ class trainer :
     def get_example(self, img_idx, split='train', downsample=4):
         sc = .05
 
-        print("number of imgdata", split, len(self.imgdata[split]))
-        print("present_idx ", img_idx)
-
         img = self.imgdata[split][img_idx]
         
         # (4, 4)
@@ -112,7 +109,6 @@ class trainer :
             try:
                 rng, rng_input = random.split(rng)
                 img_idx = random.randint(rng_input, shape=(), minval=0, maxval=self.total_num_of_sample - 25)
-                # print("\n=====\n", img_idx, "\n=====")
                 images, rays, bds = self.get_example(img_idx, downsample=1)
             except:
                 print('data loading error')
