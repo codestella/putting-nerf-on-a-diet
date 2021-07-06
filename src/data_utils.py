@@ -1,6 +1,7 @@
 import os
 import glob 
 import json
+from functools import partial
 
 import imageio
 import cv2
@@ -60,19 +61,27 @@ def render_path_spiral(c2w, up, rads, focal, zrate, rots, N):
 
 
 def _parse_nerf_synthetic(pose_path, img_path, down):
+
+    def image_loader(imgfile, H, W):
+        img = cv2.resize(imageio.imread(imgfile), (H, W))
+        img = (np.array(img) / 255.).astype(np.float32)
+        img = img[..., :3] * img[..., -1:] + 1 - img[..., -1:]
+        return img
+
     posedata = {}
-    imgdata = {}
+    imgfiles = {}
 
     for split_type in ['train', 'test', 'val']:
-        imgs, poses = [], []
+        sub_imgfiles, poses = [], []
         posedata[split_type] = {}
-        imgdata[split_type] = {}
+        imgfiles[split_type] = {}
 
         with open(os.path.join(pose_path, 'transforms_'+split_type+'.json'), 'r') as fp:
             meta = json.load(fp)
 
         img0 = imageio.imread(os.path.join(img_path, 'r_0.png')) # to get H, W
 
+        # H, W is the same across train/ val/ test
         H, W = img0.shape[0]//down, img0.shape[1]//down
         cy, cx = H/2., W/2.
 
@@ -83,43 +92,46 @@ def _parse_nerf_synthetic(pose_path, img_path, down):
             fname = os.path.join(img_path, 'r_'+str(idx)+'.png')
 
             try:
-                imgs.append(cv2.resize(imageio.imread(fname), (H,W)))
+                sub_imgfiles.append(fname)
                 poses.append(np.array(frame['transform_matrix']))
             except:
                 continue
 
         focal = .5 * W / np.tan(.5 * float(meta['camera_angle_x']))/down 
         kinv = np.array([[1/focal, 0., -cx/focal], [0., 1/focal, -cy/focal], [0., 0., 1.]])
-        imgs = (np.array(imgs) / 255.).astype(np.float32)
-        imgdata[split_type] = imgs[...,:3] * imgs[...,-1:] + 1-imgs[...,-1:]
+        imgfiles[split_type] = sub_imgfiles
         posedata[split_type]['c2w_mats'] = np.array(poses).astype(np.float32)
         posedata[split_type]['kinv_mats'] = np.tile(kinv, (datalen, 1, 1))
         posedata[split_type]['bds'] = np.tile(np.array([2.0, 6.0]), (datalen, 1))
         posedata[split_type]['res_mats'] = np.tile(np.array([H, W]), (datalen, 1))
 
-    return imgdata, posedata
+    return imgfiles, posedata, partial(image_loader, H=H, W=H)
 
 def _parse_phototourism(pose_path, img_path):
+
+    def image_loader(imgfile):
+        img = np.array(imageio.imread(imgfile)[..., :3] / 255.)
+        return img
+
     posedata = {}
-    imgdata = {}
+    imgfiles = {}
 
-    imgfiles = sorted(glob.glob(img_path + '/*.jpg'))
-
+    imgfiles_list = sorted(glob.glob(img_path + '/*.jpg'))
     for split_type in ['train', 'test', 'val']:
         posedata[split_type] = {}
-        imgs = []
+        sub_imgfiles = []
 
         if split_type == 'train':
-            start, end = 25, len(imgfiles)
+            start, end = 25, len(imgfiles_list)
         elif split_type == 'test':
             start, end = 0, 20
-        elif split_type == 'val':
+        else:
             start, end = 20, 25
 
         for i in range(start, end):
-            imgs.append(np.array(imageio.imread(imgfiles[i])[..., :3] / 255.))
+            sub_imgfiles.append(imgfiles_list[i])
 
-        imgdata[split_type] = imgs
+        imgfiles[split_type] = sub_imgfiles
 
         for f in os.listdir(pose_path):
             if '.npy' not in f:
@@ -127,10 +139,11 @@ def _parse_phototourism(pose_path, img_path):
             z = np.load(os.path.join(pose_path, f))
             posedata[split_type][f.split('.')[0]] = z
 
-    return imgdata, posedata
+    return imgfiles, posedata, image_loader
+
 
 def data_loader(select_data, abspath, preload=True, down=1):
-    '''
+    """
     input:
         select_data: 'data_class/dataname'
             e.g.) 'nerf_synthetic/lego', 'phototourism/sacre', 'shapenet/chair'
@@ -138,8 +151,7 @@ def data_loader(select_data, abspath, preload=True, down=1):
         preload: whether pre-loading the images at onces OR loading whenever get_example() called
     output:
         imgfiles
-    '''
-
+    """
     data_class, data_name = select_data.split('/')
 
     if data_class == 'nerf_synthetic':
@@ -159,8 +171,7 @@ def data_loader(select_data, abspath, preload=True, down=1):
             return _parse_phototourism(pose_path, img_path)
 
     elif data_class == 'shapenet':
-        raise "NOT IMPLEMENTED"
+        raise NotImplementedError
 
     else:
         raise NameError('Wrong data class. check `select_data` variable')
-    

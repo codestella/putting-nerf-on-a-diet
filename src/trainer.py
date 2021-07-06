@@ -2,7 +2,6 @@ import os
 import pickle
 from tqdm import tqdm
 import imageio
-import glob
 from src.models import Model
 import jax
 import jax.numpy as np
@@ -11,7 +10,7 @@ from jax.experimental import optimizers
 from livelossplot import PlotLosses
 import matplotlib.pyplot as plt
 
-from src.step_utils import (render_fn, psnr_fn, mse_fn, single_step)
+from src.step_utils import (render_fn, psnr_fn, single_step)
 from src.data_utils import poses_avg, render_path_spiral, get_rays, data_loader
 
 
@@ -27,9 +26,9 @@ class trainer :
         self.opt_state = opt_init(self.params)
         self.loss = 1e5
         
-        self.imgdata, self.posedata = data_loader(args.select_data, args.datadir)
+        self.imgfiles, self.posedata, self.image_loader = data_loader(args.select_data, args.datadir)
 
-        self.total_num_of_sample = len(self.imgdata['train']) + len(self.imgdata['test']) + len(self.imgdata['val'])
+        self.total_num_of_sample = len(self.imgfiles['train']) + len(self.imgfiles['test']) + len(self.imgfiles['val'])
         print(f'{self.total_num_of_sample} images')
         print('Pose data loaded - ', self.posedata.keys())
 
@@ -68,7 +67,7 @@ class trainer :
     def get_example(self, img_idx, split='train', downsample=4):
         sc = .05
 
-        img = self.imgdata[split][img_idx]
+        img = self.image_loader(self.imgfiles[split][img_idx])
         
         # (4, 4)
         c2w =  self.posedata[split]['c2w_mats'][img_idx]
@@ -222,4 +221,3 @@ class trainer :
 
                 with open(f'{exp_dir}checkpount_{step}.pkl', 'wb') as file:
                     pickle.dump(self.params, file)
-
