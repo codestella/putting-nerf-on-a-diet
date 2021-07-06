@@ -78,7 +78,10 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    args.posedir = args.datadir + f'/phototourism/sacre'  # Directory condtains [bds.npy, c2w_mats.npy, kinv_mats.npy, res_mats.npy]
-    args.imgdir = args.datadir + f'/phototourism/original/sacre/sacre_coeur/dense/images/'  # Directory of images
+    # args.posedir = args.datadir + f'/phototourism/sacre/'  # Directory condtains [bds.npy, c2w_mats.npy, kinv_mats.npy, res_mats.npy]
+    # args.imgdir = args.datadir + f'/phototourism/original/sacre/sacre_coeur/dense/images/'  # Directory of images
+    args.posedir = args.datadir + f'/phototourism/sacre/'  # Directory condtains [bds.npy, c2w_mats.npy, kinv_mats.npy, res_mats.npy]
+    args.imgdir = args.datadir + f'pull-phototourism-images/sacre_coeur/dense/images/'  # Directory of images
+    
     my_trainer = trainer(args)
     my_trainer.train()
