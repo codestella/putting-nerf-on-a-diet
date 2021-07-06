@@ -30,8 +30,6 @@ class trainer :
         self.imgdata, self.posedata = data_loader(args.select_data, args.datadir)
 
         total_num_of_sample = len(self.imgdata['train']) + len(self.imgdata['test']) + len(self.imgdata['val'])
-        print("train_samples: ", self.imgdata['train'].shape[0])
-
         print(f'{total_num_of_sample} images')
         print('Pose data loaded - ', self.posedata.keys())
 
