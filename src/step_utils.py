@@ -62,8 +62,8 @@ def render_rays(rnd_input, model, params,
 
     return rgb_map, depth_map, acc_map
 
-@jit
-def single_step(rng, image, rays, params, bds, inner_step_size, N_samples, model):
+
+def single_step_wojit(rng, image, rays, params, bds, inner_step_size, N_samples, model):
     def sgd(param, update):
         return param - inner_step_size * update
 
@@ -78,6 +78,8 @@ def single_step(rng, image, rays, params, bds, inner_step_size, N_samples, model
     return rng, new_params, model_loss
 
 
+# nn.linen.Module is not jittable
+single_step = jit(single_step_wojit, static_argnums=[6, 7])
 # optimize render_fn_inner by JIT (func in, func out)
 render_fn_inner = jit(render_fn_inner, static_argnums=(1, 7, 8, 9))
 mse_fn = jit(lambda x, y: np.mean((x - y)**2))

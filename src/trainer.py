@@ -1,4 +1,3 @@
-
 import os
 import pickle
 from tqdm import tqdm
@@ -13,7 +12,7 @@ from livelossplot import PlotLosses
 import matplotlib.pyplot as plt
 
 from src.step_utils import (render_fn, psnr_fn, mse_fn, single_step)
-from src.data_utils import poses_avg, render_path_spiral, get_rays
+from src.data_utils import poses_avg, render_path_spiral, get_rays, data_loader
 
 
 class trainer :
@@ -27,17 +26,14 @@ class trainer :
         opt_init, self.opt_update, self.get_params = optimizers.adam(args.lr)
         self.opt_state = opt_init(self.params)
         self.loss = 1e5
-        self.posedata = {}
-        for f in os.listdir(self.args.posedir):
-            if '.npy' not in f:
-                continue
-            z = np.load(os.path.join(self.args.posedir, f))
-            self.posedata[f.split('.')[0]] = z
+        
+        self.imgdata, self.posedata = data_loader(args.select_data, args.datadir)
 
-        imgfiles = sorted(glob.glob(self.args.imgdir + '/*.jpg'))
-        print(f'{len(imgfiles)} images')
+        total_num_of_sample = self.imgdata['train'].shape[0] + self.imgdata['test'].shape[0] + self.imgdata['val'].shape[0]
+        print("train_samples: ", self.imgdata['train'].shape[0])
+
+        print(f'{total_num_of_sample} images')
         print('Pose data loaded - ', self.posedata.keys())
-        self.imgfiles = sorted(glob.glob(self.args.imgdir + '/*.jpg'))
 
     def update_network_weights(self, rng, images, rays, params, inner_steps, bds):
         for _ in range(inner_steps):
@@ -73,33 +69,23 @@ class trainer :
 
     def get_example(self, img_idx, split='train', downsample=4):
         sc = .05
-
-        # first 20 are test, next 5 are validation, the rest are training:
-        # https://github.com/tancik/learnit/issues/3
-        if 'train' in split:
-            img_idx = img_idx + 25
-        if 'val' in split:
-            img_idx = img_idx + 20
-
-        # uint8 --> float
-        img = imageio.imread(self.imgfiles[img_idx])[..., :3] / 255.
-
-        # WHAT DO THESE MATRICES MEAN???
+        img = self.imgdata[split][img_idx]
+        
         # (4, 4)
-        c2w = self.posedata['c2w_mats'][img_idx]
+        c2w =  self.posedata[split]['c2w_mats'][img_idx]
         # (3, 3)
-        kinv = self.posedata['kinv_mats'][img_idx]
-        c2w = np.concatenate([c2w[:3, :3], c2w[:3, 3:4] * sc], -1)
+        kinv = self.posedata[split]['kinv_mats'][img_idx]
+        c2w = np.concatenate([c2w[:3 ,:3], c2w[:3 ,3:4 ] * sc], -1)
         # (2, )
-        bds = self.posedata['bds'][img_idx] * np.array([.9, 1.2]) * sc
-        H, W = img.shape[:2]
+        bds = self.posedata[split]['bds'][img_idx] * np.array([.9, 1.2]) * sc
 
+        H, W = img.shape[:2]
         # (0, 4, 8, ..., H)
-        # WHAT ARE THE PURPOSES OF THIS MATRIX???
         i, j = np.meshgrid(np.arange(0, W, downsample), np.arange(0, H, downsample), indexing='xy')
 
         test_images = img[j, i]
         test_rays = get_rays(c2w, kinv, i, j)
+
         return test_images, test_rays, bds
 
     def train(self):
@@ -237,5 +223,4 @@ class trainer :
 
                 with open(f'{exp_dir}checkpount_{step}.pkl', 'wb') as file:
                     pickle.dump(self.params, file)
-
 

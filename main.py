@@ -72,13 +72,18 @@ if __name__ == "__main__":
     parser.add_argument(
         '--datadir',
         type=str,
-        default=f'/mnt/hdd1/stella/inerf/learnit_Data',
+        default='/kaggle/input/',
         help='The data loading base path'
     )
 
-    args = parser.parse_args()
+    parser.add_argument(
+        '--select_data',
+        type=str,
+        default='phototourism/sacre',
+        help="Select data to use e.g.) 'nerf_synthetic/lego', 'phototourism/sacre', 'shapenet/chair'"
+    )
 
-    args.posedir = args.datadir + f'/phototourism/sacre'  # Directory condtains [bds.npy, c2w_mats.npy, kinv_mats.npy, res_mats.npy]
-    args.imgdir = args.datadir + f'/phototourism/original/sacre/sacre_coeur/dense/images/'  # Directory of images
+    args = parser.parse_args()
+    
     my_trainer = trainer(args)
     my_trainer.train()
