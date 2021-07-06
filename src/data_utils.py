@@ -107,32 +107,25 @@ def _parse_phototourism(pose_path, img_path):
 
     for type in ['train', 'test', 'val']:
         posedata[type] = {}
-        # imgdata[type] = {}
         imgs = []
 
         if type == 'train':
-            start, end = 25, len(os.listdir(img_path))
+            start, end = 25, len(imgfiles)
         elif type == 'test':
             start, end = 0, 20
         elif type == 'val':
             start, end = 20, 25
 
-        for iter, f in enumerate(os.listdir(img_path)[start:end]):
-            if '.npy' not in f:
-                continue
-
-            z = np.load(os.path.join(pose_path, f))
-            posedata[type][f.split('.')[0]] = z
-            _im = imageio.imread(imgfiles[iter])[..., :3] / 255.
-            imgs.append(np.array(_im))
-            # imgs.append(imageio.imread(imgfiles[iter])[..., :3] / 255.)    
+        for i in range(start, end):
+            imgs.append(np.array(imageio.imread(imgfiles[i])[..., :3] / 255.))
 
         imgdata[type] = imgs
-    
-        # if imgs.shape[3]==4: # alpha channel
-        #     imgdata[type] = imgs[...,:3] * imgs[...,-1:] + 1-imgs[...,-1:]
-        # else:
-        #     imgdata[type] = imgs
+
+        for f in os.listdir(pose_path):
+            if '.npy' not in f:
+                continue
+            z = np.load(os.path.join(pose_path, f))
+            posedata[type][f.split('.')[0]] = z
 
     return imgdata, posedata
 

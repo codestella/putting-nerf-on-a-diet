@@ -112,7 +112,7 @@ class trainer :
             try:
                 rng, rng_input = random.split(rng)
                 img_idx = random.randint(rng_input, shape=(), minval=0, maxval=self.total_num_of_sample - 25)
-                print("=====\n", img_idx, "\n=====")
+                # print("\n=====\n", img_idx, "\n=====")
                 images, rays, bds = self.get_example(img_idx, downsample=1)
             except:
                 print('data loading error')
