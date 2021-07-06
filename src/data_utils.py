@@ -111,13 +111,13 @@ def _parse_phototourism(pose_path, img_path):
         imgs = []
 
         if type == 'train':
-            start, end = 25, len(os.listdir(pose_path))
+            start, end = 25, len(os.listdir(img_path))
         elif type == 'test':
             start, end = 0, 20
         elif type == 'val':
             start, end = 20, 25
 
-        for iter, f in enumerate(os.listdir(pose_path)[start:end]):
+        for iter, f in enumerate(os.listdir(img_path)[start:end]):
             if '.npy' not in f:
                 continue
 
