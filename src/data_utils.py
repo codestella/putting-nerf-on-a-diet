@@ -117,7 +117,9 @@ def _parse_phototourism(pose_path, img_path):
             start, end = 20, 25
 
         for i in range(start, end):
-            imgs.append(np.array(imageio.imread(imgfiles[i])[..., :3] / 255.))
+            # We should normalize later. it gives memory issue in Google colab.
+            # to make image always rgb, pilmode shoule be "RGB"
+            imgs.append(np.array(imageio.imread(imgfiles[i], pilmode = "RGB")[..., :3]))
 
         imgdata[split_type] = imgs
 
@@ -151,8 +153,8 @@ def data_loader(select_data, abspath, preload=True, down=1):
     elif data_class == 'phototourism':
         ## temporary setting to test;
         temp_data_class = "pull-phototourism-images"
-        pose_path = os.path.join(abspath, data_class, data_class, data_name) # Directory condtains [bds.npy, c2w_mats.npy, kinv_mats.npy, res_mats.npy]
-        img_path = os.path.join(abspath, temp_data_class, data_name+'_coeur', 'dense', 'images') # Directory of images
+        pose_path = os.path.join(abspath, data_class, data_name) # Directory condtains [bds.npy, c2w_mats.npy, kinv_mats.npy, res_mats.npy]
+        img_path = os.path.join(abspath, data_class, data_name, 'images') # Directory of images
         print("\n====== \n pose path = ", pose_path, "\n ====== ")
         print("\n====== \n img path = ", img_path, "\n ====== ")
         if preload:

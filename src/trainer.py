@@ -11,9 +11,10 @@ from jax.experimental import optimizers
 from livelossplot import PlotLosses
 import matplotlib.pyplot as plt
 
-from src.step_utils import (render_fn, psnr_fn, mse_fn, single_step)
-from src.data_utils import poses_avg, render_path_spiral, get_rays, data_loader
+from transformers import FlaxCLIPModel
 
+from src.step_utils import render_fn, psnr_fn, mse_fn, single_step, CLIPProcessor, random_pose
+from src.data_utils import poses_avg, render_path_spiral, get_rays, data_loader
 
 class trainer :
 
@@ -33,17 +34,36 @@ class trainer :
         print(f'{self.total_num_of_sample} images')
         print('Pose data loaded - ', self.posedata.keys())
 
-    def update_network_weights(self, rng, images, rays, params, inner_steps, bds):
+        ## CLIPS things
+        self.CLIP_model = FlaxCLIPModel.from_pretrained("openai/clip-vit-base-patch32", dtype = np.float16)
+        self.K = 16
+
+
+    def update_network_weights(self, rng, step, images, rays, params, inner_steps, bds, target_emb):
         for _ in range(inner_steps):
             rng, rng_input = random.split(rng)
-            idx = random.randint(rng_input, shape=(self.args.batch_size,), minval=0, maxval=images.shape[0])
-            image_sub = images[idx, :]
+
+            H, W, _ = images.shape
+            downsample = max(H,W)//56
+            i, j = np.meshgrid(np.arange(0, W, downsample), np.arange(0, H, downsample), indexing='xy')
+            f = H * 1.
+            kinv = np.array([
+                1. / f, 0, -W * .5 / f,
+                0, -1. / f, H * .5 / f,
+                0, 0, -1.
+            ]).reshape([3, 3])
+
+            random_ray = get_rays(random_pose(rng, bds), kinv, i, j)
+            images_ = np.reshape(images, (-1, 3))
+            idx = random.randint(rng_input, shape=(self.args.batch_size,), minval=0, maxval=images_.shape[0])
+            image_sub = images_[idx, :]
             rays_sub = rays[:, idx, :]
-            rng, params, loss = single_step(rng, image_sub, rays_sub, params, bds, self.args.inner_step_size, self.args.N_samples, self.model)
+            rng, params, loss = single_step(rng, step, image_sub, rays_sub, params, bds, self.args.inner_step_size, self.args.N_samples, self.model, 
+                random_ray, target_emb, self.CLIP_model, self.K) # arguments for sc_loss
         return rng, params, loss
 
-    def update_model(self, step, rng, params, opt_state, image, rays, bds):
-        rng, new_params, model_loss = self.update_network_weights(rng, image, rays, params, self.args.inner_update_steps, bds)
+    def update_model(self, step, rng, params, opt_state, image, rays, bds, target_emb):
+        rng, new_params, model_loss = self.update_network_weights(rng, step, image, rays, params, self.args.inner_update_steps, bds, target_emb)
 
         def calc_grad(params, new_params):
             return params - new_params
@@ -54,12 +74,13 @@ class trainer :
         return rng, params, opt_state, model_loss
 
     @jit
-    def update_model_single(self, step, rng, params, opt_state, image, rays, bds):
+    def update_model_single(self, step, rng, params, opt_state, image, rays, bds, random_ray, target_emb):
 
         def calc_grad(params, new_params):
             return params - new_params
 
-        rng, new_params, model_loss = single_step(rng, image, rays, params, bds, self.args.inner_step_size, self.args.N_samples, self.model)
+        rng, new_params, model_loss = single_step(rng, image, rays, params, bds, self.args.inner_step_size, self.args.N_samples, self.model, 
+            random_ray, target_emb, self.CLIP_model, self.K) # arguments for sc_loss
         model_grad = jax.tree_multimap(calc_grad, params, new_params)
         opt_state = self.opt_update(step, model_grad, opt_state)
         params = self.get_params(opt_state)
@@ -69,7 +90,6 @@ class trainer :
         sc = .05
 
         img = self.imgdata[split][img_idx]
-        
         # (4, 4)
         c2w =  self.posedata[split]['c2w_mats'][img_idx]
         # (3, 3)
@@ -110,16 +130,19 @@ class trainer :
                 rng, rng_input = random.split(rng)
                 img_idx = random.randint(rng_input, shape=(), minval=0, maxval=self.total_num_of_sample - 25)
                 images, rays, bds = self.get_example(img_idx, downsample=1)
+                images /= 255.
             except:
                 print('data loading error')
                 raise
 
-            images = np.reshape(images, (-1, 3))
+            target_emb = self.CLIP_model.get_image_features(pixel_values=CLIPProcessor(np.expand_dims(images,0).transpose(0,3,1,2)))
+            target_emb /= np.linalg.norm(target_emb, axis=-1, keepdims=True)
+
             rays = np.reshape(rays, (2, -1, 3))
 
             # don't need single
-            rng, self.params, self.opt_state, self.loss = self.update_model(step, rng, self.params, self.opt_state,
-                                                        images, rays, bds)
+            rng, self.params, self.opt_state, self.loss = self.update_model(step, rng, self.params, self.opt_state, images, rays, bds,
+                target_emb)
 
             train_psnrs.append(-10 * np.log10(self.loss))
 
