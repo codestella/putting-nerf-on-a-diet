@@ -15,7 +15,7 @@ from src.step_utils import (render_fn, psnr_fn, mse_fn, single_step)
 from src.data_utils import poses_avg, render_path_spiral, get_rays, data_loader
 
 
-class trainer :
+class Trainer:
 
     def __init__(self, args):
         self.args = args
@@ -104,6 +104,9 @@ class trainer :
         plotlosses_model = PlotLosses(groups=plt_groups)
         plt_groups['Train PSNR'].append(exp_name + f'_train')
         plt_groups['Test PSNR'].append(exp_name + f'_test')
+
+        os.makedirs(exp_dir, exist_ok=True)
+        os.makedirs(temp_eval_result_dir, exist_ok=True)
 
         for step in tqdm(range(self.args.max_iters)):
             try:

@@ -1,5 +1,5 @@
 import argparse
-from src.trainer import trainer
+from src.trainer import Trainer
 
 if __name__ == "__main__":
 
@@ -85,5 +85,5 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
     
-    my_trainer = trainer(args)
+    my_trainer = Trainer(args)
     my_trainer.train()
