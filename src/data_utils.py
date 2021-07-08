@@ -8,6 +8,8 @@ import cv2
 import jax.numpy as np
 from jax import jit
 
+from transformers import FlaxCLIPModel
+from src.step_utils import CLIPProcessor
 
 @jit
 def get_rays(c2w, kinv, i, j):
@@ -102,12 +104,17 @@ def _parse_nerf_synthetic(pose_path, img_path, down):
 def _parse_phototourism(pose_path, img_path):
     posedata = {}
     imgdata = {}
+    embeded_imgdata = {}
+    downsample = 4
 
     imgfiles = sorted(glob.glob(img_path + '/*.jpg'))
+
+    CLIP_model = FlaxCLIPModel.from_pretrained("openai/clip-vit-base-patch32", dtype = np.float16)
 
     for split_type in ['train', 'test', 'val']:
         posedata[split_type] = {}
         imgs = []
+        embeded_imgs = []
 
         if split_type == 'train':
             start, end = 25, len(imgfiles)
@@ -120,8 +127,19 @@ def _parse_phototourism(pose_path, img_path):
             # We should normalize later. it gives memory issue in Google colab.
             # to make image always rgb, pilmode shoule be "RGB"
             imgs.append(np.array(imageio.imread(imgfiles[i], pilmode = "RGB")[..., :3]))
+            img = np.array(imageio.imread(imgfiles[i], pilmode = "RGB")[..., :3])
+            H, W = img.shape[:2]
+            # (0, 4, 8, ..., H)
+            i, j = np.meshgrid(np.arange(0, W, downsample), np.arange(0, H, downsample), indexing='xy')
+            images = img[j, i]
+            images /= 255.
+            target_emb = CLIP_model.get_image_features(pixel_values=CLIPProcessor(np.expand_dims(images,0).transpose(0,3,1,2)))
+            target_emb /= np.linalg.norm(target_emb, axis=-1, keepdims=True)
+            embeded_imgs.append(target_emb)
+            
 
         imgdata[split_type] = imgs
+        embeded_imgdata[split_type] = target_emb
 
         for f in os.listdir(pose_path):
             if '.npy' not in f:
@@ -129,7 +147,7 @@ def _parse_phototourism(pose_path, img_path):
             z = np.load(os.path.join(pose_path, f))
             posedata[split_type][f.split('.')[0]] = z
 
-    return imgdata, posedata
+    return imgdata, embeded_imgdata, posedata
 
 def data_loader(select_data, abspath, preload=True, down=1):
     '''
