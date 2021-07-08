@@ -28,7 +28,7 @@ class trainer :
         self.opt_state = opt_init(self.params)
         self.loss = 1e5
         
-        self.imgdata, self.posedata = data_loader(args.select_data, args.datadir)
+        self.imgdata, self.embeded_imgdata, self.posedata = data_loader(args.select_data, args.datadir)
 
         self.total_num_of_sample = len(self.imgdata['train']) + len(self.imgdata['test']) + len(self.imgdata['val'])
         print(f'{self.total_num_of_sample} images')
@@ -105,7 +105,9 @@ class trainer :
         test_images = img[j, i]
         test_rays = get_rays(c2w, kinv, i, j)
 
-        return test_images, test_rays, bds
+        embeded_test_images = self.embeded_imgdata[split][img_idx]
+
+        return test_images, embeded_test_images, test_rays, bds
 
     def train(self):
         step = 0
@@ -129,14 +131,15 @@ class trainer :
             try:
                 rng, rng_input = random.split(rng)
                 img_idx = random.randint(rng_input, shape=(), minval=0, maxval=self.total_num_of_sample - 25)
-                images, rays, bds = self.get_example(img_idx, downsample=1)
+                images, embeded_images, rays, bds = self.get_example(img_idx, downsample=1)
                 images /= 255.
             except:
                 print('data loading error')
                 raise
 
-            target_emb = self.CLIP_model.get_image_features(pixel_values=CLIPProcessor(np.expand_dims(images,0).transpose(0,3,1,2)))
-            target_emb /= np.linalg.norm(target_emb, axis=-1, keepdims=True)
+            # target_emb = self.CLIP_model.get_image_features(pixel_values=CLIPProcessor(np.expand_dims(images,0).transpose(0,3,1,2)))
+            # target_emb /= np.linalg.norm(target_emb, axis=-1, keepdims=True)
+            target_emb = embeded_images
 
             rays = np.reshape(rays, (2, -1, 3))
 
