@@ -1,5 +1,5 @@
 import argparse
-from src.trainer import trainer
+from src.trainer import Trainer
 
 if __name__ == "__main__":
 
@@ -72,18 +72,18 @@ if __name__ == "__main__":
     parser.add_argument(
         '--datadir',
         type=str,
-        default='/kaggle/input/',
+        default='/content/gdrive/MyDrive/Colab_codes/',
         help='The data loading base path'
     )
 
     parser.add_argument(
         '--select_data',
         type=str,
-        default='phototourism/sacre',
+        default='phototourism/notre',
         help="Select data to use e.g.) 'nerf_synthetic/lego', 'phototourism/sacre', 'shapenet/chair'"
     )
 
     args = parser.parse_args()
     
-    my_trainer = trainer(args)
+    my_trainer = Trainer(args)
     my_trainer.train()
