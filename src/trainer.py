@@ -31,7 +31,7 @@ class trainer :
         self.imgdata, self.embeded_imgdata, self.posedata = data_loader(args.select_data, args.datadir)
 
         self.total_num_of_sample = len(self.imgdata['train']) + len(self.imgdata['test']) + len(self.imgdata['val'])
-        print('{self.total_num_of_sample} images')
+        print(f'{self.total_num_of_sample} images')
         print('Pose data loaded - ', self.posedata.keys())
 
         ## CLIPS things
