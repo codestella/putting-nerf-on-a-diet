@@ -91,7 +91,8 @@ def SC_loss(rng_inputs, model, params, bds, rays, N_samples, target_emb, CLIP_mo
     # _,H,W,D = rays.shape
     rng_inputs, model, params, bds, rays, N_samples, target_emb, CLIP_model, l = my_policy.cast_to_compute((rng_inputs, model, params, bds, rays, N_samples, target_emb, CLIP_model, l))
     _,H,W,_ = rays.shape
-    source_img = np.clip(render_rays(rng_inputs, model, params, None, np.reshape(rays, (2, -1, 3)), bds[0], bds[1], 1, rand=False), 0, 1)
+    source_img = np.clip(render_fn(rng_inputs, model, params, None, np.reshape(rays, (2, -1, 3)), bds[0], bds[1], 1, rand=False), 0, 1)
+    #source_img = np.clip(render_rays(rng_inputs, model, params, None, np.reshape(rays, (2, -1, 3)), bds[0], bds[1], 1, rand=False), 0, 1)
     source_img = np.reshape(source_img, [1,H,W,3]).transpose(0,3,1,2)
     source_img = CLIPProcessor(source_img)
     source_emb = CLIP_model.get_image_features(pixel_values=source_img)
@@ -105,7 +106,9 @@ def single_step_wojit(rng, step, image, rays, params, bds, inner_step_size, N_sa
     rng, rng_inputs = jax.random.split(rng)
 
     def loss_model(params):
-        g = render_rays(rng_inputs, model, params, None, rays, bds[0], bds[1], N_samples, rand=True)
+        #g = render_rays(rng_inputs, model, params, None, rays, bds[0], bds[1], N_samples, rand=True)
+        g = np.clip(render_fn(rng, model, params, None, rays, bds[0], bds[1], N_samples,
+                      rand=False)[0], 0, 1)
         L = mse_fn(g, image)
         L = jax.lax.cond(step%K == 0,
             lambda _: L + SC_loss(rng_inputs, model, params, bds, random_ray, N_samples, target_emb, CLIP_model, 1), # exact value of lambda is unknown.
