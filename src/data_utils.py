@@ -140,7 +140,6 @@ def _parse_phototourism(pose_path, img_path):
                 target_emb /= np.linalg.norm(target_emb, axis=-1, keepdims=True)
                 embeded_imgs += np.split(target_emb, target_emb.shape[0])
                 batch = []
-                break
 
         if len(batch) > 0:
             target_emb = CLIP_model.get_image_features(pixel_values=np.concatenate(batch,0))
