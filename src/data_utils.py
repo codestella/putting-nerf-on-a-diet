@@ -11,6 +11,8 @@ from jax import jit
 from transformers import FlaxCLIPModel
 from src.step_utils import CLIPProcessor
 
+from tqdm import tqdm
+
 @jit
 def get_rays(c2w, kinv, i, j):
 #     i, j = np.meshgrid(np.arange(W), np.arange(H), indexing='xy')
@@ -123,23 +125,30 @@ def _parse_phototourism(pose_path, img_path):
         elif split_type == 'val':
             start, end = 20, 25
 
-        for i in range(start, end):
+        batch = []
+        for i in tqdm(range(start, end)):
             # We should normalize later. it gives memory issue in Google colab.
             # to make image always rgb, pilmode shoule be "RGB"
             imgs.append(np.array(imageio.imread(imgfiles[i], pilmode = "RGB")[..., :3]))
             img = np.array(imageio.imread(imgfiles[i], pilmode = "RGB")[..., :3])
             H, W = img.shape[:2]
             # (0, 4, 8, ..., H)
-            i, j = np.meshgrid(np.arange(0, W, downsample), np.arange(0, H, downsample), indexing='xy')
-            images = img[j, i]
-            images /= 255.
-            target_emb = CLIP_model.get_image_features(pixel_values=CLIPProcessor(np.expand_dims(images,0).transpose(0,3,1,2)))
-            target_emb /= np.linalg.norm(target_emb, axis=-1, keepdims=True)
-            embeded_imgs.append(target_emb)
             
+            batch.append(CLIPProcessor(np.expand_dims(img/255,0).transpose(0,3,1,2)))
+            if len(batch) == 8: # batch-wise computation for efficiency
+                target_emb = CLIP_model.get_image_features(pixel_values=np.concatenate(batch,0))
+                target_emb /= np.linalg.norm(target_emb, axis=-1, keepdims=True)
+                embeded_imgs += np.split(target_emb, target_emb.shape[0])
+                batch = []
+                break
+
+        if len(batch) > 0:
+            target_emb = CLIP_model.get_image_features(pixel_values=np.concatenate(batch,0))
+            target_emb /= np.linalg.norm(target_emb, axis=-1, keepdims=True)
+            embeded_imgs += np.split(target_emb, target_emb.shape[0])
 
         imgdata[split_type] = imgs
-        embeded_imgdata[split_type] = target_emb
+        embeded_imgdata[split_type] = embeded_imgs
 
         for f in os.listdir(pose_path):
             if '.npy' not in f:

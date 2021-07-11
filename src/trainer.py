@@ -44,7 +44,7 @@ class Trainer:
             rng, rng_input = random.split(rng)
 
             H, W, _ = images.shape
-            downsample = max(H,W)//56
+            downsample = max(H,W)//112
             i, j = np.meshgrid(np.arange(0, W, downsample), np.arange(0, H, downsample), indexing='xy')
             f = H * 1.
             kinv = np.array([
