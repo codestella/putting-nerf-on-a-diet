@@ -11,41 +11,35 @@ my_policy = jmp.Policy(compute_dtype=np.float16,
 # one of them is it cannot contain the condition function, so I make two independent functions for rand condition.
 def render_fn(rnd_input, model, params, rays, near, far, N_samples):
     i = 0
-    chunk = 5
+    chunk = 16
     l = math.ceil(rays.shape[1]/chunk)
     rgb_map = np.zeros([rays.shape[1],3], dtype = rays.dtype)
-    depth_map = acc_map = np.zeros(rays.shape[1], dtype = rays.dtype)
     z_vals = np.expand_dims(np.linspace(near, far, N_samples, dtype = rays.dtype), 0)
     def body_fn(carry, x):
-        i, depth_map, acc_map, rgb_map, rays = carry
+        i, rgb_map, rays = carry
         out = render_rays(model, params, jax.lax.dynamic_slice(rays, (0,i,0), (2,chunk,3)), z_vals)
-        rgb_map = jax.lax.dynamic_update_slice(rgb_map, out[0], (i,0))
-        depth_map = jax.lax.dynamic_update_slice(depth_map, out[1], (i,))
-        acc_map = jax.lax.dynamic_update_slice(acc_map, out[2], (i,))
-        return [i+chunk, depth_map, acc_map, rgb_map, rays], [None]
+        rgb_map = jax.lax.dynamic_update_slice(rgb_map, out, (i,0))
+        return [i+chunk, rgb_map, rays], [None]
 
-    [_, depth_map, acc_map, rgb_map, _], _ = jax.lax.scan(body_fn, [i, depth_map, acc_map, rgb_map, rays], None, length=l, reverse=True) 
+    [_, rgb_map, _], _ = jax.lax.scan(body_fn, [i, rgb_map, rays], None, length=l, reverse=True) 
     
     return rgb_map
 
 def render_fn_w_rand(rnd_input, model, params, rays, near, far, N_samples):
     i = 0
-    chunk = 5
+    chunk = 16
     l = math.ceil(rays.shape[1]/chunk)
     rgb_map = np.zeros([rays.shape[1],3], dtype = rays.dtype)
-    depth_map = acc_map = np.zeros(rays.shape[1], dtype = rays.dtype)
-    z_vals = np.tile(np.expand_dims(np.linspace(near, far, N_samples, dtype = rays.dtype), 0), [chunk,1])
+    z_vals = np.expand_dims(np.linspace(near, far, N_samples, dtype = rays.dtype), 0)
     def body_fn(carry, x):
-        i, depth_map, acc_map, rgb_map, rays = carry
+        i, rgb_map, rays = carry
         out = render_rays(model, params, jax.lax.dynamic_slice(rays, (0,i,0), (2,chunk,3)), 
-            z_vals + random.uniform(rnd_input, shape=z_vals.shape, dtype = rays.dtype) * (far - near) / N_samples
+            z_vals + random.uniform(rnd_input, shape=[chunk, N_samples], dtype = rays.dtype) * (far - near) / N_samples
         )
-        rgb_map = jax.lax.dynamic_update_slice(rgb_map, out[0], (i,0))
-        depth_map = jax.lax.dynamic_update_slice(depth_map, out[1], (i,))
-        acc_map = jax.lax.dynamic_update_slice(acc_map, out[2], (i,))
-        return [i+chunk, depth_map, acc_map, rgb_map, rays], [None]
+        rgb_map = jax.lax.dynamic_update_slice(rgb_map, out, (i,0))
+        return [i+chunk, rgb_map, rays], [None]
 
-    [_, depth_map, acc_map, rgb_map, _], _ = jax.lax.scan(body_fn, [i, depth_map, acc_map, rgb_map, rays], None, length=l, reverse=True) 
+    [_, rgb_map, _], _ = jax.lax.scan(body_fn, [i, rgb_map, rays], None, length=l, reverse=True) 
     
     return rgb_map
 
@@ -74,10 +68,7 @@ def render_rays(model, params, rays, z_vals):
     weights = alpha * np.cumprod(trans, -1)
     
     rgb_map = np.sum(weights[..., None] * rgb, -2)
-
-    acc_map = np.sum(weights, -1)
-    depth_map = np.sum(weights * z_vals, -1)
-    return rgb_map, depth_map, acc_map
+    return rgb_map
 
 def CLIPProcessor(image):
     '''
@@ -117,13 +108,13 @@ def single_step_wojit(rng, step, image, rays, params, bds, inner_step_size, N_sa
     rng, rng_inputs = jax.random.split(rng)
 
     def loss_model(params):
-        g = np.clip(render_fn_w_rand(rng_inputs, model, params, np.reshape(rays, (2, -1, 3)), bds[0], bds[1], N_samples), 0, 1)
+        g = np.clip(render_fn_w_rand(rng_inputs, model, params, rays, bds[0], bds[1], N_samples), 0, 1)
         L = mse_fn(g, image)
-        L = jax.lax.cond(step%K == 0,
-            lambda _: L + SC_loss(rng_inputs, model, params, bds, random_ray, N_samples, target_emb, CLIP_model, 1), # exact value of lambda is unknown.
-            lambda _: L, 
-            operand=None
-        )
+        # L = jax.lax.cond(step%K == 0,
+        #     lambda _: L + SC_loss(rng_inputs, model, params, bds, random_ray, N_samples, target_emb, CLIP_model, 1), # exact value of lambda is unknown.
+        #     lambda _: L, 
+        #     operand=None
+        # )
         return L
 
     model_loss, grad = jax.value_and_grad(loss_model)(params)

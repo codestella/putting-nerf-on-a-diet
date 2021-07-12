@@ -12,6 +12,7 @@ from livelossplot import PlotLosses
 import matplotlib.pyplot as plt
 
 from transformers import FlaxCLIPModel
+import flax
 
 from src.step_utils import render_fn, psnr_fn, mse_fn, single_step, CLIPProcessor, random_pose
 from src.data_utils import poses_avg, render_path_spiral, get_rays, data_loader
@@ -24,37 +25,46 @@ class Trainer:
         key1, key2 = random.split(jax.random.PRNGKey(0))
         dummy_x = random.normal(key1, (1, 3))
         self.params = self.model.init(key2, dummy_x)
+
+        if args.pretrained is not None:
+            self.params = flax.core.frozen_dict.unfreeze(self.params)
+            with open(os.path.join(self.args.datadir, self.args.select_data, 'notre_checkpount_150000.pkl'), 'rb') as file:
+                pretrained = pickle.load(file)
+            for i, (_, p) in enumerate(pretrained.items()):
+                self.params['params']['fc%s'%(str(i) if i < 5 else '_last')]['kernel'] = p['w']
+                self.params['params']['fc%s'%(str(i) if i < 5 else '_last')]['bias'] = p['b']
+            self.params = flax.core.frozen_dict.freeze(self.params)
+            
+        self.CLIP_model = FlaxCLIPModel.from_pretrained("openai/clip-vit-base-patch32", dtype = np.float16)
+
         opt_init, self.opt_update, self.get_params = optimizers.adam(args.lr)
         self.opt_state = opt_init(self.params)
         self.loss = 1e5
         
-        self.imgdata, self.embeded_imgdata, self.posedata = data_loader(args.select_data, args.datadir)
+        self.imgdata, self.embeded_imgdata, self.posedata = data_loader(args.select_data, args.datadir, self.CLIP_model)
 
         self.total_num_of_sample = len(self.imgdata['train']) + len(self.imgdata['test']) + len(self.imgdata['val'])
         print(f'{self.total_num_of_sample} images')
         print('Pose data loaded - ', self.posedata.keys())
 
         ## CLIPS things
-        self.CLIP_model = FlaxCLIPModel.from_pretrained("openai/clip-vit-base-patch32", dtype = np.float16)
         self.K = 16
 
-
     def update_network_weights(self, rng, step, images, rays, params, inner_steps, bds, target_emb):
+        H, W, _ = images.shape
+        downsample = max(H,W)//56
+        i, j = np.meshgrid(np.arange(0, W, downsample), np.arange(0, H, downsample), indexing='xy')
+        f = H * 1.
+        kinv = np.array([
+            1. / f, 0, -W * .5 / f,
+            0, -1. / f, H * .5 / f,
+            0, 0, -1.
+        ]).reshape([3, 3])
+        images_ = np.reshape(images, (-1, 3))
+
         for _ in range(inner_steps):
             rng, rng_input = random.split(rng)
-
-            H, W, _ = images.shape
-            downsample = max(H,W)//112
-            i, j = np.meshgrid(np.arange(0, W, downsample), np.arange(0, H, downsample), indexing='xy')
-            f = H * 1.
-            kinv = np.array([
-                1. / f, 0, -W * .5 / f,
-                0, -1. / f, H * .5 / f,
-                0, 0, -1.
-            ]).reshape([3, 3])
-
             random_ray = get_rays(random_pose(rng, bds), kinv, i, j)
-            images_ = np.reshape(images, (-1, 3))
             idx = random.randint(rng_input, shape=(self.args.batch_size,), minval=0, maxval=images_.shape[0])
             image_sub = images_[idx, :]
             rays_sub = rays[:, idx, :]
@@ -140,8 +150,6 @@ class Trainer:
                 print('data loading error')
                 raise
 
-            # target_emb = self.CLIP_model.get_image_features(pixel_values=CLIPProcessor(np.expand_dims(images,0).transpose(0,3,1,2)))
-            # target_emb /= np.linalg.norm(target_emb, axis=-1, keepdims=True)
             target_emb = embeded_images
 
             rays = np.reshape(rays, (2, -1, 3))
@@ -162,21 +170,20 @@ class Trainer:
                 test_psnr = []
                 for ti in range(5):
                     # TODO need pack into test image loader, need to to change Only Use Fewshot
-                    test_images, test_rays, bds = self.get_example(ti, split='val', downsample=2)
+                    test_images, _, test_rays, bds = self.get_example(ti, split='val', downsample=2)
 
                     test_images, test_holdout_images = np.split(test_images, [test_images.shape[1] // 2], axis=1)
                     test_rays, test_holdout_rays = np.split(test_rays, [test_rays.shape[2] // 2], axis=2)
 
-                    test_images_flat = np.reshape(test_images, (-1, 3))
                     test_rays = np.reshape(test_rays, (2, -1, 3))
                     # Training Fewshot image
-                    rng, test_params, test_inner_loss = self.update_network_weights(rng, test_images_flat, test_rays, self.params,
-                                                                               self.args.test_inner_steps, bds)
+                    rng, test_params, test_inner_loss = self.update_network_weights(rng, 1, test_images, test_rays, self.params,
+                                                                             self.args.test_inner_steps, bds, None)
 
                     # Rendering part
                     test_result = np.clip(
                         render_fn(rng, self.model, test_params, None, test_holdout_rays, bds[0], bds[1], self.args.N_samples,
-                              rand=False)[0],
+                              rand=False),
                         0, 1)
                     test_psnr.append(psnr_fn(test_holdout_images, test_result))
                 test_psnr = np.mean(np.array(test_psnr))
@@ -197,19 +204,18 @@ class Trainer:
                 plt.savefig(os.path.join(temp_eval_result_dir, "{:06d}.png".format(step)))
 
             if step % 10000 == 0 and step != 0:
-                test_images, test_rays, bds = self.get_example(0, split='test')
-                test_images_flat = np.reshape(test_images, (-1, 3))
+                test_images, _, test_rays, bds = self.get_example(0, split='test')
                 test_rays = np.reshape(test_rays, (2, -1, 3))
                 # training 1
-                rng, test_params_1, test_inner_loss = self.update_network_weights(rng, test_images_flat, test_rays, self.params,
-                                                                             self.args.test_inner_steps, bds)
+                rng, test_params_1, test_inner_loss = self.update_network_weights(rng, 1, test_images, test_rays, self.params,
+                                                                             self.args.test_inner_steps, bds, None)
 
-                test_images, test_rays, bds = self.get_example(1, split='test')
+                test_images, _, test_rays, bds = self.get_example(1, split='test')
                 test_images_flat = np.reshape(test_images, (-1, 3))
                 test_rays = np.reshape(test_rays, (2, -1, 3))
                 # training 2
-                rng, test_params_2, test_inner_loss = self.update_network_weights(rng, test_images_flat, test_rays, self.params,
-                                                                             self.args.test_inner_steps, bds)
+                rng, test_params_2, test_inner_loss = self.update_network_weights(rng, 1, test_images, test_rays, self.params,
+                                                                             self.args.test_inner_steps, bds, None)
 
                 poses = self.posedata['c2w_mats']
                 c2w = poses_avg(poses)
