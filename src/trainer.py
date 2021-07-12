@@ -28,7 +28,7 @@ class Trainer:
 
         if args.pretrained is not None:
             self.params = flax.core.frozen_dict.unfreeze(self.params)
-            with open(os.path.join(self.args.datadir, self.args.select_data, 'notre_checkpount_150000.pkl'), 'rb') as file:
+            with open(os.path.join(self.args.datadir, self.args.select_data, self.args.pretrained), 'rb') as file:
                 pretrained = pickle.load(file)
             for i, (_, p) in enumerate(pretrained.items()):
                 self.params['params']['fc%s'%(str(i) if i < 5 else '_last')]['kernel'] = p['w']
