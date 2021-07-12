@@ -51,7 +51,7 @@ if __name__ == "__main__":
     parser.add_argument(
         '--batch_size',
         type=int,
-        default=64,
+        default=256,
         help='The batch size in training loop'
     )
 
@@ -65,7 +65,7 @@ if __name__ == "__main__":
     parser.add_argument(
         '--N_samples',
         type=int,
-        default=128,
+        default=1024,
         help='The sampling point numbers in the ray'
     )
 

@@ -170,7 +170,8 @@ class Trainer:
                 test_psnr = []
                 for ti in range(5):
                     # TODO need pack into test image loader, need to to change Only Use Fewshot
-                    test_images, _, test_rays, bds = self.get_example(ti, split='val', downsample=2)
+                    test_images, _, test_rays, bds = self.get_example(ti, split='val', downsample=4)
+                    test_images/=255
 
                     test_images, test_holdout_images = np.split(test_images, [test_images.shape[1] // 2], axis=1)
                     test_rays, test_holdout_rays = np.split(test_rays, [test_rays.shape[2] // 2], axis=2)
@@ -208,12 +209,14 @@ class Trainer:
 
             if step % 10000 == 0 and step != 0:
                 test_images, _, test_rays, bds = self.get_example(0, split='test')
+                test_images/=255
                 test_rays = np.reshape(test_rays, (2, -1, 3))
                 # training 1
                 rng, test_params_1, test_inner_loss = self.update_network_weights(rng, 1, test_images, test_rays, self.params,
                                                                              self.args.test_inner_steps, bds, None)
 
                 test_images, _, test_rays, bds = self.get_example(1, split='test')
+                test_images/=255
                 test_images_flat = np.reshape(test_images, (-1, 3))
                 test_rays = np.reshape(test_rays, (2, -1, 3))
                 # training 2
