@@ -10,7 +10,7 @@ from jax import jit, random
 from jax.experimental import optimizers
 from livelossplot import PlotLosses
 import matplotlib.pyplot as plt
-
+import numpy as onp
 from transformers import FlaxCLIPModel
 import flax
 
@@ -175,16 +175,13 @@ class Trainer:
                     test_images, test_holdout_images = np.split(test_images, [test_images.shape[1] // 2], axis=1)
                     test_rays, test_holdout_rays = np.split(test_rays, [test_rays.shape[2] // 2], axis=2)
 
-                    test_rays = np.reshape(test_rays, (2, -1, 3))
                     # Training Fewshot image
-                    rng, test_params, test_inner_loss = self.update_network_weights(rng, 1, test_images, test_rays, self.params,
+                    rng, test_params, test_inner_loss = self.update_network_weights(rng, 1, test_images, np.reshape(test_rays, (2, -1, 3)), self.params,
                                                                              self.args.test_inner_steps, bds, None)
 
                     # Rendering part
-                    test_result = np.clip(
-                        render_fn(rng, self.model, test_params, None, test_holdout_rays, bds[0], bds[1], self.args.N_samples,
-                              rand=False),
-                        0, 1)
+                    test_result = render_fn(rng, self.model, test_params, np.reshape(test_holdout_rays, (2, -1, 3)), bds[0], bds[1], self.args.N_samples)
+                    test_result = np.reshape(test_result, test_holdout_rays.shape[1:])
                     test_psnr.append(psnr_fn(test_holdout_images, test_result))
                 test_psnr = np.mean(np.array(test_psnr))
 
@@ -203,6 +200,12 @@ class Trainer:
                 plt.imshow(test_result)
                 plt.savefig(os.path.join(temp_eval_result_dir, "{:06d}.png".format(step)))
 
+                plt.plot(train_steps, train_psnrs_all)
+                plt.savefig(f'{exp_dir}train_curve_{step}.png')
+
+                plt.plot(test_steps, test_psnrs_all)
+                plt.savefig(f'{exp_dir}test_curve_{step}.png')
+
             if step % 10000 == 0 and step != 0:
                 test_images, _, test_rays, bds = self.get_example(0, split='test')
                 test_rays = np.reshape(test_rays, (2, -1, 3))
@@ -217,7 +220,8 @@ class Trainer:
                 rng, test_params_2, test_inner_loss = self.update_network_weights(rng, 1, test_images, test_rays, self.params,
                                                                              self.args.test_inner_steps, bds, None)
 
-                poses = self.posedata['c2w_mats']
+                # if 'nerf_synthetic' in self.args.select_data:
+                poses = self.posedata['test']['c2w_mats']
                 c2w = poses_avg(poses)
                 # TODO Need to change this rendering info with different dataset
                 focal = .8
@@ -242,19 +246,11 @@ class Trainer:
                     interp_params = jax.tree_multimap(
                         lambda x, y: y * p / len(render_poses) + x * (1 - p / len(render_poses)),
                         test_params_1, test_params_2)
-                    result = \
-                    render_fn(rng, self.model, interp_params, None, rays, bds[0], bds[1], self.args.N_samples, rand=False)[0]
-                    renders.append(result)
+                    result = render_fn(rng, self.model, interp_params, np.reshape(rays,[2,-1,3]), bds[0], bds[1], self.args.N_samples)
+                    result = np.reshape(result, rays.shape[1:])
+                    renders.append(onp.array(result*255).astype(np.uint8))
 
-                renders = (np.clip(np.array(renders), 0, 1) * 255).astype(np.uint8)
                 imageio.mimwrite(f'{exp_dir}render_sprial_{step}.mp4', renders, fps=30, quality=8)
-
-                plt.plot(train_steps, train_psnrs_all)
-                plt.savefig(f'{exp_dir}train_curve_{step}.png')
-
-                plt.plot(test_steps, test_psnrs_all)
-                plt.savefig(f'{exp_dir}test_curve_{step}.png')
 
                 with open(f'{exp_dir}checkpount_{step}.pkl', 'wb') as file:
                     pickle.dump(self.params, file)
-

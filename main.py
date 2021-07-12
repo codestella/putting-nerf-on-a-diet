@@ -23,8 +23,8 @@ if __name__ == "__main__":
     parser.add_argument(
         '--scene',
         type=str,
-        choices=['sacre', 'trevi', 'bandenburg'],
-        default='sacre',
+        choices=['sacre', 'trevi', 'bandenburg', 'notre'],
+        default='notre',
         help='The type of scene'
     )
     parser.add_argument(
@@ -86,6 +86,7 @@ if __name__ == "__main__":
     parser.add_argument(
         '--pretrained',
         type=str,
+        help="load pre-trained parameters in the google drive; learnit_data"
     )
 
     args = parser.parse_args()
