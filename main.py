@@ -83,6 +83,11 @@ if __name__ == "__main__":
         help="Select data to use e.g.) 'nerf_synthetic/lego', 'phototourism/sacre', 'shapenet/chair'"
     )
 
+    parser.add_argument(
+        '--pretrained',
+        type=str,
+    )
+
     args = parser.parse_args()
     
     my_trainer = Trainer(args)
