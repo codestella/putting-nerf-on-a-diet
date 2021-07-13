@@ -8,8 +8,8 @@ import cv2
 import jax.numpy as np
 from jax import jit
 
-from transformers import FlaxCLIPModel
 from src.step_utils import CLIPProcessor
+from tqdm import tqdm
 
 @jit
 def get_rays(c2w, kinv, i, j):
@@ -101,15 +101,13 @@ def _parse_nerf_synthetic(pose_path, img_path, down):
 
     return imgdata, posedata
 
-def _parse_phototourism(pose_path, img_path):
+def _parse_phototourism(pose_path, img_path, CLIP_model):
     posedata = {}
     imgdata = {}
     embeded_imgdata = {}
     downsample = 4
 
     imgfiles = sorted(glob.glob(img_path + '/*.jpg'))
-
-    CLIP_model = FlaxCLIPModel.from_pretrained("openai/clip-vit-base-patch32", dtype = np.float16)
 
     for split_type in ['train', 'test', 'val']:
         posedata[split_type] = {}
@@ -123,23 +121,29 @@ def _parse_phototourism(pose_path, img_path):
         elif split_type == 'val':
             start, end = 20, 25
 
-        for i in range(start, end):
+        batch = []
+        for i in tqdm(range(start, end)):
             # We should normalize later. it gives memory issue in Google colab.
             # to make image always rgb, pilmode shoule be "RGB"
             imgs.append(np.array(imageio.imread(imgfiles[i], pilmode = "RGB")[..., :3]))
             img = np.array(imageio.imread(imgfiles[i], pilmode = "RGB")[..., :3])
             H, W = img.shape[:2]
             # (0, 4, 8, ..., H)
-            i, j = np.meshgrid(np.arange(0, W, downsample), np.arange(0, H, downsample), indexing='xy')
-            images = img[j, i]
-            images /= 255.
-            target_emb = CLIP_model.get_image_features(pixel_values=CLIPProcessor(np.expand_dims(images,0).transpose(0,3,1,2)))
-            target_emb /= np.linalg.norm(target_emb, axis=-1, keepdims=True)
-            embeded_imgs.append(target_emb)
             
+            batch.append(CLIPProcessor(np.expand_dims(img/255,0).transpose(0,3,1,2)))
+            if len(batch) == 32: # batch-wise computation for efficiency
+                target_emb = CLIP_model.get_image_features(pixel_values=np.concatenate(batch,0))
+                target_emb /= np.linalg.norm(target_emb, axis=-1, keepdims=True)
+                embeded_imgs += np.split(target_emb, target_emb.shape[0])
+                batch = []
+
+        if len(batch) > 0:
+            target_emb = CLIP_model.get_image_features(pixel_values=np.concatenate(batch,0))
+            target_emb /= np.linalg.norm(target_emb, axis=-1, keepdims=True)
+            embeded_imgs += np.split(target_emb, target_emb.shape[0])
 
         imgdata[split_type] = imgs
-        embeded_imgdata[split_type] = target_emb
+        embeded_imgdata[split_type] = embeded_imgs
 
         for f in os.listdir(pose_path):
             if '.npy' not in f:
@@ -149,7 +153,7 @@ def _parse_phototourism(pose_path, img_path):
 
     return imgdata, embeded_imgdata, posedata
 
-def data_loader(select_data, abspath, preload=True, down=1):
+def data_loader(select_data, abspath, CLIP_model, preload=True, down=1):
     '''
     input:
         select_data: 'data_class/dataname'
@@ -176,7 +180,7 @@ def data_loader(select_data, abspath, preload=True, down=1):
         print("\n====== \n pose path = ", pose_path, "\n ====== ")
         print("\n====== \n img path = ", img_path, "\n ====== ")
         if preload:
-            return _parse_phototourism(pose_path, img_path)
+            return _parse_phototourism(pose_path, img_path, CLIP_model)
 
     elif data_class == 'shapenet':
         raise "NOT IMPLEMENTED"

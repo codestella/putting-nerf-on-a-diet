@@ -1,46 +1,56 @@
-import jax
+import jax, jmp
 import jax.numpy as np
 from jax import jit, random
 
-import jmp
+import math
 my_policy = jmp.Policy(compute_dtype=np.float16,
                        param_dtype=np.float16,
                        output_dtype=np.float16)
 
-def render_fn(rnd_input, model, params, bvals, rays, near, far, N_samples, rand):
-    chunk = 5
-    for i in range(0, rays.shape[1], chunk):
-        out = render_fn_inner(rnd_input, model, params, bvals, rays[:, i:i + chunk], near, far, rand, True, N_samples)
-        if i == 0:
-            rets = out
-        else:
-            rets = [np.concatenate([a, b], 0) for a, b in zip(rets, out)]
-    return rets
+# jax.lax.while_loop is much faster than python for loop, but it has many restricts.
+# one of them is it cannot contain the condition function, so I make two independent functions for rand condition.
+def render_fn(rnd_input, model, params, rays, near, far, N_samples):
+    i = 0
+    chunk = 16
+    l = math.ceil(rays.shape[1]/chunk)
+    rgb_map = np.zeros([rays.shape[1],3], dtype = rays.dtype)
+    z_vals = np.expand_dims(np.linspace(near, far, N_samples, dtype = rays.dtype), 0)
+    def body_fn(carry, x):
+        i, rgb_map, rays = carry
+        out = render_rays(model, params, jax.lax.dynamic_slice(rays, (0,i,0), (2,chunk,3)), z_vals)
+        rgb_map = jax.lax.dynamic_update_slice(rgb_map, out, (i,0))
+        return [i+chunk, rgb_map, rays], [None]
 
+    [_, rgb_map, _], _ = jax.lax.scan(body_fn, [i, rgb_map, rays], None, length=l, reverse=True) 
+    
+    return rgb_map
 
-def render_fn_inner(rnd_input, model, params, bvals, rays, near, far, rand, allret, N_samples):
-    return render_rays(rnd_input, model, params, bvals, rays, near, far,
-                       N_samples=N_samples, rand=rand, allret=allret)
+def render_fn_w_rand(rnd_input, model, params, rays, near, far, N_samples):
+    i = 0
+    chunk = 16
+    l = math.ceil(rays.shape[1]/chunk)
+    rgb_map = np.zeros([rays.shape[1],3], dtype = rays.dtype)
+    z_vals = np.expand_dims(np.linspace(near, far, N_samples, dtype = rays.dtype), 0)
+    def body_fn(carry, x):
+        i, rgb_map, rays = carry
+        out = render_rays(model, params, jax.lax.dynamic_slice(rays, (0,i,0), (2,chunk,3)), 
+            z_vals + random.uniform(rnd_input, shape=[chunk, N_samples], dtype = rays.dtype) * (far - near) / N_samples
+        )
+        rgb_map = jax.lax.dynamic_update_slice(rgb_map, out, (i,0))
+        return [i+chunk, rgb_map, rays], [None]
 
+    [_, rgb_map, _], _ = jax.lax.scan(body_fn, [i, rgb_map, rays], None, length=l, reverse=True) 
+    
+    return rgb_map
 
-def render_rays(rnd_input, model, params,
-                bvals, rays, near, far,
-                N_samples, rand=False, allret=False):
+def render_rays(model, params, rays, z_vals):
     rays_o, rays_d = rays
-
-    # Compute 3D query points
-    z_vals = np.linspace(near, far, N_samples, dtype = rays.dtype)
-    if rand:
-        z_vals += random.uniform(rnd_input, shape=list(rays_o.shape[:-1]) + [N_samples], dtype = rays.dtype) * (far - near) / N_samples
+    
     # r(t) = o + t*d
     pts = rays_o[..., None, :] + rays_d[..., None, :] * z_vals[..., :, None]
 
     # Run network
     pts_flat = np.reshape(pts, [-1, 3])
-    if bvals is not None:
-        pts_flat = np.concatenate([np.sin(pts_flat @ bvals.T),
-                                   np.cos(pts_flat @ bvals.T)], axis=-1)
-
     raw = model.apply(params, pts_flat)
     raw = my_policy.cast_to_compute((raw))
     raw = np.reshape(raw, list(pts.shape[:-1]) + [4])
@@ -49,23 +59,16 @@ def render_rays(rnd_input, model, params,
     rgb, sigma_a = raw[..., :3], raw[..., 3]
     sigma_a = jax.nn.relu(sigma_a)
     rgb = jax.nn.sigmoid(rgb)
-    # print(raw.dtype, sigma_a.dtype, rgb.dtype, z_vals.dtype)
-
+    
     # Do volume rendering
     dists = np.concatenate([z_vals[..., 1:] - z_vals[..., :-1], np.broadcast_to([1e10], z_vals[..., :1].shape).astype(rays.dtype)], -1)
     alpha = 1. - np.exp(-sigma_a * dists)
     trans = np.minimum(1., 1. - alpha + 1e-10)
     trans = np.concatenate([np.ones_like(trans[..., :1]), trans[..., :-1]], -1)
     weights = alpha * np.cumprod(trans, -1)
-    # print(dists.dtype, alpha.dtype, trans.dtype, weights.dtype)
-
+    
     rgb_map = np.sum(weights[..., None] * rgb, -2)
-    if not allret:
-        return rgb_map
-
-    acc_map = np.sum(weights, -1)
-    depth_map = np.sum(weights * z_vals, -1)
-    return rgb_map, depth_map, acc_map
+    return rgb_map
 
 def CLIPProcessor(image):
     '''
@@ -91,8 +94,7 @@ def SC_loss(rng_inputs, model, params, bds, rays, N_samples, target_emb, CLIP_mo
     # _,H,W,D = rays.shape
     rng_inputs, model, params, bds, rays, N_samples, target_emb, CLIP_model, l = my_policy.cast_to_compute((rng_inputs, model, params, bds, rays, N_samples, target_emb, CLIP_model, l))
     _,H,W,_ = rays.shape
-    source_img = np.clip(render_fn(rng_inputs, model, params, None, np.reshape(rays, (2, -1, 3)), bds[0], bds[1], 1, rand=False), 0, 1)
-    #source_img = np.clip(render_rays(rng_inputs, model, params, None, np.reshape(rays, (2, -1, 3)), bds[0], bds[1], 1, rand=False), 0, 1)
+    source_img = np.clip(render_fn(rng_inputs, model, params, np.reshape(rays, (2, -1, 3)), bds[0], bds[1], N_samples), 0, 1)
     source_img = np.reshape(source_img, [1,H,W,3]).transpose(0,3,1,2)
     source_img = CLIPProcessor(source_img)
     source_emb = CLIP_model.get_image_features(pixel_values=source_img)
@@ -106,15 +108,13 @@ def single_step_wojit(rng, step, image, rays, params, bds, inner_step_size, N_sa
     rng, rng_inputs = jax.random.split(rng)
 
     def loss_model(params):
-        #g = render_rays(rng_inputs, model, params, None, rays, bds[0], bds[1], N_samples, rand=True)
-        g = np.clip(render_fn(rng, model, params, None, rays, bds[0], bds[1], N_samples,
-                      rand=False)[0], 0, 1)
+        g = np.clip(render_fn_w_rand(rng_inputs, model, params, rays, bds[0], bds[1], N_samples), 0, 1)
         L = mse_fn(g, image)
-        L = jax.lax.cond(step%K == 0,
-            lambda _: L + SC_loss(rng_inputs, model, params, bds, random_ray, N_samples, target_emb, CLIP_model, 1), # exact value of lambda is unknown.
-            lambda _: L, 
-            operand=None
-        )
+        # L = jax.lax.cond(step%K == 0,
+        #     lambda _: L + SC_loss(rng_inputs, model, params, bds, random_ray, N_samples, target_emb, CLIP_model, 1), # exact value of lambda is unknown.
+        #     lambda _: L, 
+        #     operand=None
+        # )
         return L
 
     model_loss, grad = jax.value_and_grad(loss_model)(params)
@@ -124,7 +124,11 @@ def single_step_wojit(rng, step, image, rays, params, bds, inner_step_size, N_sa
 # nn.linen.Module is not jittable
 single_step = jit(single_step_wojit, static_argnums=[7, 8, 11])
 # optimize render_fn_inner by JIT (func in, func out)
-render_fn_inner = jit(render_fn_inner, static_argnums=(1, 7, 8, 9))
+# render_fn_inner = jit(render_fn_inner, static_argnums=(1, 7, 8, 9))
+render_fn = jit(render_fn, static_argnums=(1, 6))
+render_fn_w_rand = jit(render_fn_w_rand, static_argnums=(1, 6))
+render_rays = jit(render_rays, static_argnums=(0))
+
 mse_fn = jit(lambda x, y: np.mean((x - y)**2))
 psnr_fn = jit(lambda x, y: -10 * np.log10(mse_fn(x, y)))
 
