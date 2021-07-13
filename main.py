@@ -72,7 +72,7 @@ if __name__ == "__main__":
     parser.add_argument(
         '--datadir',
         type=str,
-        default='/content/gdrive/MyDrive/Colab_codes/',
+        default='/mnt/data/',
         help='The data loading base path'
     )
 

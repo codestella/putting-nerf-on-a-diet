@@ -112,12 +112,12 @@ class Trainer:
         # (0, 4, 8, ..., H)
         i, j = np.meshgrid(np.arange(0, W, downsample), np.arange(0, H, downsample), indexing='xy')
 
-        test_images = img[j, i]
+        #test_images = img[j,i]
         test_rays = get_rays(c2w, kinv, i, j)
 
         embeded_test_images = self.embeded_imgdata[split][img_idx]
 
-        return test_images, embeded_test_images, test_rays, bds
+        return img[::downsample, ::downsample], embeded_test_images, test_rays, bds
 
     def train(self):
         step = 0
@@ -144,7 +144,7 @@ class Trainer:
             try:
                 rng, rng_input = random.split(rng)
                 img_idx = random.randint(rng_input, shape=(), minval=0, maxval=self.total_num_of_sample - 25)
-                images, embeded_images, rays, bds = self.get_example(img_idx, downsample=1)
+                images, embeded_images, rays, bds = self.get_example(img_idx, downsample=2)
                 images /= 255.
             except:
                 print('data loading error')
