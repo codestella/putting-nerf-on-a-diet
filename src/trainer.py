@@ -51,6 +51,7 @@ class Trainer:
         self.K = 16
 
     def update_network_weights(self, rng, step, images, rays, params, inner_steps, bds, target_emb):
+        '''
         H, W, _ = images.shape
         downsample = max(H,W)//56
         i, j = np.meshgrid(np.arange(0, W, downsample), np.arange(0, H, downsample), indexing='xy')
@@ -60,16 +61,17 @@ class Trainer:
             0, -1. / f, H * .5 / f,
             0, 0, -1.
         ]).reshape([3, 3])
+        '''
         images_ = np.reshape(images, (-1, 3))
 
         for _ in range(inner_steps):
             rng, rng_input = random.split(rng)
-            random_ray = get_rays(random_pose(rng, bds), kinv, i, j)
+            #random_ray = get_rays(random_pose(rng, bds), kinv, i, j)
             idx = random.randint(rng_input, shape=(self.args.batch_size,), minval=0, maxval=images_.shape[0])
             image_sub = images_[idx, :]
             rays_sub = rays[:, idx, :]
             rng, params, loss = single_step(rng, step, image_sub, rays_sub, params, bds, self.args.inner_step_size, self.args.N_samples, self.model, 
-                random_ray, target_emb, self.CLIP_model, self.K) # arguments for sc_loss
+                random_ray = None , target_emb = None , CLIP_model = None , K = None) # arguments for sc_loss
         return rng, params, loss
 
     def update_model(self, step, rng, params, opt_state, image, rays, bds, target_emb):
@@ -96,7 +98,7 @@ class Trainer:
         params = self.get_params(opt_state)
         return rng, params, opt_state, model_loss
 
-    def get_example(self, img_idx, split='train', downsample=4):
+    def get_example(self, img_idx, split='train', downsample=4, crop = False):
         sc = .05
 
         img = self.imgdata[split][img_idx]
@@ -109,15 +111,22 @@ class Trainer:
         bds = self.posedata[split]['bds'][img_idx] * np.array([.9, 1.2]) * sc
 
         H, W = img.shape[:2]
-        # (0, 4, 8, ..., H)
-        i, j = np.meshgrid(np.arange(0, W, downsample), np.arange(0, H, downsample), indexing='xy')
 
-        #test_images = img[j,i]
+        if crop:
+            cs = 100
+            i0 = onp.random.randint(0, H-cs)
+            j0 = onp.random.randint(0, W-cs)
+
+            i, j = np.meshgrid(np.arange(i0, i0+cs), np.arange(j0, j0+cs), indexing='xy')
+            test_img = img[i0:i0+cs,j0:j0+cs]
+
+        else:
+            i, j = np.meshgrid(np.arange(0, W, downsample), np.arange(0, H, downsample), indexing='xy')
+            test_img = img[::downsample, ::downsample]
+
         test_rays = get_rays(c2w, kinv, i, j)
-
         embeded_test_images = self.embeded_imgdata[split][img_idx]
-
-        return img[::downsample, ::downsample], embeded_test_images, test_rays, bds
+        return test_img, embeded_test_images, test_rays, bds
 
     def train(self):
         step = 0
@@ -144,7 +153,7 @@ class Trainer:
             try:
                 rng, rng_input = random.split(rng)
                 img_idx = random.randint(rng_input, shape=(), minval=0, maxval=self.total_num_of_sample - 25)
-                images, embeded_images, rays, bds = self.get_example(img_idx, downsample=2)
+                images, embeded_images, rays, bds = self.get_example(img_idx, crop=True)
                 images /= 255.
             except:
                 print('data loading error')

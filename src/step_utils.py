@@ -122,7 +122,7 @@ def single_step_wojit(rng, step, image, rays, params, bds, inner_step_size, N_sa
     return rng, new_params, model_loss
 
 # nn.linen.Module is not jittable
-single_step = jit(single_step_wojit, static_argnums=[7, 8, 11])
+single_step = jit(single_step_wojit, static_argnums=[7, 8])#, 11])
 # optimize render_fn_inner by JIT (func in, func out)
 # render_fn_inner = jit(render_fn_inner, static_argnums=(1, 7, 8, 9))
 render_fn = jit(render_fn, static_argnums=(1, 6))
