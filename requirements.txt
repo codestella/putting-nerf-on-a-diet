@@ -6,3 +6,4 @@ livelossplot
 matplotlib
 tqdm
 opencv-python
+wandb

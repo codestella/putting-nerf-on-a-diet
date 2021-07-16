@@ -28,6 +28,7 @@ from jax import random
 import numpy as np
 import tensorflow as tf
 import tensorflow_hub as tf_hub
+import wandb
 
 from jaxnerf.nerf import datasets
 from jaxnerf.nerf import models
@@ -53,6 +54,8 @@ def main(unused_argv):
     # LPIPS computation or dataset loading.
     tf.config.experimental.set_visible_devices([], "GPU")
     tf.config.experimental.set_visible_devices([], "TPU")
+
+    wandb.init(project="hf-flax-clip-nerf", entity="wandb", sync_tensorboard=True)
 
     rng = random.PRNGKey(20200823)
 
