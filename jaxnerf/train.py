@@ -28,12 +28,8 @@ from jax import config
 from jax import random
 import jax.numpy as jnp
 import numpy as np
-<<<<<<< HEAD
-# import wandb
-=======
 import wandb
 from tqdm import tqdm
->>>>>>> nerf-with-clip
 
 from jaxnerf.nerf import datasets
 from jaxnerf.nerf import models
