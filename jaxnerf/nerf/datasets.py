@@ -145,7 +145,7 @@ class Dataset(threading.Thread):
                 f"{flags.batching} batching strategy is not implemented.")
 
     def _test_init(self, flags):
-        self.renderings = self._load_renderings(flags, clip_model=False)
+        self.renderings = self._load_renderings(flags, clip_model=None)
         self._generate_rays()
         self.it = 0
 
@@ -245,7 +245,9 @@ class Blender(Dataset):
             embs = []
             for img in self.images:
                 img = np.expand_dims(np.transpose(img,[2,0,1]), 0)
-                embs.append(clip_model.get_image_features(pixel_values = clip_utils.preprocess_for_CLIP(img)))
+                if clip_model is None:
+                    continue
+                embs.append(clip_model.get_image_features(pixel_values=clip_utils.preprocess_for_CLIP(img)))
             self.embeddings = np.concatenate(embs, 0)
         
             self.image_idx = np.arange(self.images.shape[0])
