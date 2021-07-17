@@ -31,7 +31,7 @@ from PIL import Image
 from jaxnerf.nerf import utils
 from jaxnerf.nerf import clip_utils
 
-def get_dataset(split, args, clip_model = None):
+def get_dataset(split, args, clip_model):
     return dataset_dict[args.dataset](split, args, clip_model)
 
 
