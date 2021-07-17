@@ -130,7 +130,7 @@ def update_step(state, grad, lr):
 
 
 def main(unused_argv):
-    wandb.init(project="hf-flax-clip-nerf", entity="wandb", sync_tensorboard=True)
+    # wandb.init(project="hf-flax-clip-nerf", entity="wandb", sync_tensorboard=True)
     rng = random.PRNGKey(20200823)
     # Shift the numpy random seed by host_id() to shuffle data loaded by different
     # hosts.
@@ -146,8 +146,11 @@ def main(unused_argv):
         raise ValueError("data_dir must be set. None set now.")
 
     # setup CLIP model
-    clip_model = clip_utils.init_CLIP(FLAGS.clip_output_dtype,
-                                      FLAGS.clip_model_name)
+    if FLAGS.use_semantic_loss:
+        clip_model = clip_utils.init_CLIP(FLAGS.clip_output_dtype,
+                                        FLAGS.clip_model_name)
+    else:
+        clip_model = None
 
     dataset = datasets.get_dataset("train", FLAGS, clip_model)
     test_dataset = datasets.get_dataset("test", FLAGS, clip_model)
@@ -224,7 +227,7 @@ def main(unused_argv):
             reset_timer = False
         lr = learning_rate_fn(step)
 
-        if step%FLAGS.sc_loss_every == 0:
+        if step%FLAGS.sc_loss_every == 0 and FLAGS.use_semantic_loss:
             # remove dimension for device coz its only run in host core
             sc_batch = dataset.get_clip_data()
             sc_loss, sc_grad = clip_utils.update_semantic_loss(model, clip_model,
@@ -237,7 +240,7 @@ def main(unused_argv):
             
         state, stats, keys = train_pstep(keys, state, batch, lr, step, FLAGS.sc_loss_every)#, grad)
         
-        if step%FLAGS.sc_loss_every == 0:
+        if step%FLAGS.sc_loss_every == 0 and FLAGS.use_semantic_loss:
             state = update_pstep(state, sc_grad, lr)
        
         if jax.host_id() == 0:

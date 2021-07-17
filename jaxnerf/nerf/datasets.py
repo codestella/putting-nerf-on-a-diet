@@ -238,7 +238,7 @@ class Blender(Dataset):
         self.focal = .5 * self.w / np.tan(.5 * camera_angle_x)
         self.n_examples = self.images.shape[0]
 
-        if clip_model is not None:
+        if flags.use_semantic_loss:
             embs = []
             for img in self.images:
                 img = np.expand_dims(np.transpose(img,[2,0,1]), 0)

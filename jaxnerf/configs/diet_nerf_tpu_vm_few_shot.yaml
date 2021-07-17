@@ -11,6 +11,7 @@ max_steps: 500000
 print_every: 100
 render_every: 5000
 save_every: 5000
+use_semantic_loss: true
 clip_model_name: openai/clip-vit-base-patch32
 clip_output_dtype: float32
 sc_loss_factor: 4
