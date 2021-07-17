@@ -218,7 +218,7 @@ class Dataset(threading.Thread):
 class Blender(Dataset):
     """Blender Dataset."""
 
-    def _load_renderings(self, flags, clip_model = None):
+    def _load_renderings(self, flags, clip_model):
         """Load images from disk."""
         if flags.render_path:
             raise ValueError("render_path cannot be used for the blender dataset.")
