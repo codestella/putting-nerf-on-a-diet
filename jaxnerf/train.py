@@ -149,8 +149,10 @@ def main(unused_argv):
     if FLAGS.use_semantic_loss:
         clip_model = clip_utils.init_CLIP(FLAGS.clip_output_dtype,
                                           FLAGS.clip_model_name)
+        print('semantic loss ACTIVATED, CLIP is set up')
     else:
         clip_model = None
+        print('semantic loss DEACTIVATED, CLIP is set to None')
     
     dataset = datasets.get_dataset("train", FLAGS, clip_model)
     test_dataset = datasets.get_dataset("test", FLAGS, clip_model)
