@@ -28,7 +28,7 @@ from jax import config
 from jax import random
 import jax.numpy as jnp
 import numpy as np
-import wandb
+# import wandb
 from tqdm import tqdm
 
 from jaxnerf.nerf import datasets
@@ -130,7 +130,7 @@ def update_step(state, grad, lr):
 
 
 def main(unused_argv):
-    wandb.init(project="hf-flax-clip-nerf", entity="wandb", sync_tensorboard=True)
+    #wandb.init(project="hf-flax-clip-nerf", entity="wandb", sync_tensorboard=True)
     rng = random.PRNGKey(20200823)
     # Shift the numpy random seed by host_id() to shuffle data loaded by different
     # hosts.
