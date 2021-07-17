@@ -145,7 +145,7 @@ class Dataset(threading.Thread):
                 f"{flags.batching} batching strategy is not implemented.")
 
     def _test_init(self, flags):
-        self.renderings = self._load_renderings(flags, clip_model=None)
+        self._load_renderings(flags, clip_model=None)
         self._generate_rays()
         self.it = 0
 
