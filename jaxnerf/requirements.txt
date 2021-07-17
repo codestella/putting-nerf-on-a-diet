@@ -10,4 +10,5 @@ tensorflow>=2.3.1
 tensorflow-hub>=0.11.0
 transformers==4.8.2
 wandb==0.10.33
+tqdm==4.61.2
 # pip install git+https://github.com/deepmind/jmp  # mixed precision for JAX
