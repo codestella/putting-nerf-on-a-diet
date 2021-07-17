@@ -20,7 +20,8 @@ FLAGS = flags.FLAGS
 def update_semantic_loss(model, clip_model, rng, state, batch, lr):
     # the batch is without shard
     random_rays = batch["random_rays"]
-    rng, key_0, key_1 = rng
+    #rng, key_0, key_1 = rng
+    rng, key_0, key_1 = random.split(rng,3)
 
     def semantic_loss(variables):
         # TODO @Alex: (alt) sample less along a ray/ sample on a strided grid (make change on model call)
@@ -29,17 +30,17 @@ def update_semantic_loss(model, clip_model, rng, state, batch, lr):
         src_image, _, _ = src_ret[-1]
         # reshape flat pixel to an image (assume 3 channels & square shape)
         w = int(math.sqrt(src_image.shape[0]))
-        src_image = src_image.reshape([-1, w, w, 3])
-        src_image = np.expand_dims(src_image, 0).transpose(0, 3, 1, 2)
+        src_image = src_image.reshape([-1, w, w, 3]).transpose(0, 3, 1, 2)
         src_image = preprocess_for_CLIP(src_image)
         src_embedding = clip_model.get_image_features(pixel_values=src_image)
-        src_embedding /= np.linalg.norm(src_embedding, axis=-1, keepdims=True)
+        src_embedding /= jnp.linalg.norm(src_embedding, axis=-1, keepdims=True)
         src_embedding = jnp.array(src_embedding)
         target_embedding = batch["embedding"]
-        sc_loss = 0.5 * FLAGS.sc_loss_mult * np.sum((src_embedding - target_embedding) ** 2) / src_embedding.shape[0]
+        sc_loss = 0.5 * FLAGS.sc_loss_mult * jnp.sum((src_embedding - target_embedding) ** 2) / src_embedding.shape[0]
         return sc_loss
 
-    sc_loss, grad = jax.value_and_grad(semantic_loss)(state.optimizer.target)
+    sc_loss, grad = jax.value_and_grad(semantic_loss)(jax.device_get(jax.tree_map(lambda x:x[0], state)).optimizer.target)
+    return sc_loss, grad
     new_optimizer = state.optimizer.apply_gradient(grad, learning_rate=lr)
     new_state = state.replace(optimizer=new_optimizer)
     return new_state, sc_loss, rng

@@ -245,6 +245,10 @@ class Blender(Dataset):
                 embs.append(clip_model.get_image_features(pixel_values = clip_utils.preprocess_for_CLIP(img)))
             self.embeddings = np.concatenate(embs, 0)
         
+            self.image_idx = np.arange(self.images.shape[0])
+            np.random.shuffle(self.image_idx)
+            self.image_idx = self.image_idx.tolist()
+            
         # self.embeddings = utils.read_pickle(flags.precompute_pkl_path)
         # self.precompute_pkl_path = flags.precompute_pkl_path
 
@@ -279,6 +283,7 @@ class Blender(Dataset):
         if self.batching == "single_image":
             image_index = batch_dict.pop("image_index")
             # target image for CLIP
+            '''
             batch_dict["embedding"] = self.embeddings[image_index]
 
             # source rays for CLIP (for constructing source image later)
@@ -288,12 +293,29 @@ class Blender(Dataset):
             random_rays = self.camtoworld_matrix_to_rays(src_camtoworld, downsample = 16)
             random_rays = utils.Rays(origins=np.reshape(random_rays[0], [-1,3]), directions=np.reshape(random_rays[1], [-1,3]), viewdirs=np.reshape(random_rays[2], [-1,3]))
             batch_dict["random_rays"] = random_rays
-
+            '''
         else:
             raise NotImplementedError
-
         return batch_dict
 
+    def get_clip_data(self):
+        if len(self.image_idx) == 0:
+            self.image_idx = np.arange(self.images.shape[0])
+            np.random.shuffle(self.image_idx)
+            self.image_idx = self.image_idx.tolist()
+        image_index = self.image_idx.pop()
+
+        batch_dict = {}
+        batch_dict["embedding"] = self.embeddings[image_index]
+
+        # source rays for CLIP (for constructing source image later)
+        src_seed = int(np.random.randint(0, self.max_steps, ()))
+        src_rng = jax.random.PRNGKey(src_seed)
+        src_camtoworld = np.array(clip_utils.random_pose(src_rng, (self.near, self.far)))
+        random_rays = self.camtoworld_matrix_to_rays(src_camtoworld, downsample = 16)
+        random_rays = utils.Rays(origins=np.reshape(random_rays[0], [-1,3]), directions=np.reshape(random_rays[1], [-1,3]), viewdirs=np.reshape(random_rays[2], [-1,3]))
+        batch_dict["random_rays"] = random_rays
+        return batch_dict
 
 class LLFF(Dataset):
     """LLFF Dataset."""

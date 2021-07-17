@@ -412,6 +412,19 @@ def learning_rate_decay(step,
 
 def shard(xs):
     """Split data into shards for multiple devices along the first dimension."""
+    '''
+    if 'embedding' in xs:
+        xs['pixels'] = jax.tree_map(lambda x: x.reshape((jax.local_device_count(), -1) + x.shape[1:]), xs['pixels'])
+        xs['rays'] = jax.tree_map(lambda x: x.reshape((jax.local_device_count(), -1) + x.shape[1:]), xs['rays'])
+        xs['embedding'] = np.stack([xs['embedding']]*jax.local_device_count(),0)
+        xs['random_rays'] = jax.tree_map(lambda x: np.stack([x]*jax.local_device_count(),0), xs['random_rays'])
+    else:
+        xs = jax.tree_map(
+        lambda x: x.reshape((jax.local_device_count(), -1) + x.shape[1:]) if len(x.shape) != 0 else x
+        , xs)
+
+    return xs
+    '''
     return jax.tree_map(
         lambda x: x.reshape((jax.local_device_count(), -1) + x.shape[1:]) if len(x.shape) != 0 else x
         , xs)

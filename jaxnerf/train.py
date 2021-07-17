@@ -49,7 +49,8 @@ if "COLAB_TPU_ADDR" in os.environ:
 print(f"detected device: {jax.local_devices()}")
 
 
-def train_step(model, clip_model, rng, state, batch, lr, step, K):
+def train_step(model, clip_model, rng, state, batch, lr, step, K, clip_grad):
+    # TODO make clip_grad input enable
     """One optimization step.
 
     Args:
@@ -95,15 +96,15 @@ def train_step(model, clip_model, rng, state, batch, lr, step, K):
                      tree_sum_fn(lambda z: jnp.prod(jnp.array(z.shape))))
 
         total_loss = loss + loss_c + FLAGS.weight_decay_mult * weight_l2
+        '''
         total_loss = jax.lax.cond(step%K == 0,
-            lambda _: total_loss + clip_utils.semantic_loss(model, clip_model, [rng, key_0, key_1], variables, batch, lr), # exact value of lambda is unknown.
+            lambda _: total_loss + 1e-3 * clip_utils.semantic_loss(model, clip_model, [rng, key_0, key_1], variables, batch, lr), # exact value of lambda is unknown.
             lambda _: total_loss, 
             operand=None
         )
+        '''
         stats = utils.Stats(loss=loss, psnr=psnr, loss_c=loss_c,
                             psnr_c=psnr_c, weight_l2=weight_l2)
-        return total_loss, stats
-
     (_, stats), grad = (
         jax.value_and_grad(loss_fn, has_aux=True)(state.optimizer.target))
     grad = jax.lax.pmean(grad, axis_name="batch")
@@ -122,9 +123,18 @@ def train_step(model, clip_model, rng, state, batch, lr, step, K):
         mult = jnp.minimum(1, FLAGS.grad_max_norm / (1e-7 + grad_norm))
         grad = jax.tree_util.tree_map(lambda z: mult * z, grad)
 
+    def merge_grad(grad, grad_clip):
+        # TODO intergrade grad and grad_clip
+        return grad
+
+    new_optimizer = state.optimizer.apply_gradient(
+        jax.lax.cond(step%K == 0, merge_grad(grad, clip_grad), lambda _: grad), learning_rate =lr)
+    return new_state, stats, rng, grad
+
+def update_step(state, grad, lr):
     new_optimizer = state.optimizer.apply_gradient(grad, learning_rate=lr)
     new_state = state.replace(optimizer=new_optimizer)
-    return new_state, stats, rng
+    return new_state
 
 
 def main(unused_argv):
@@ -167,7 +177,7 @@ def main(unused_argv):
     train_pstep = jax.pmap(
         functools.partial(train_step, model, clip_model),
         axis_name="batch",
-        in_axes=(0, 0, 0, None, None, None),
+        in_axes=(0, 0, 0, None, None, None, None),
         donate_argnums=(2,))
 
     def render_fn(variables, key_0, key_1, rays):
@@ -218,24 +228,27 @@ def main(unused_argv):
             t_loop_start = time.time()
             reset_timer = False
         lr = learning_rate_fn(step)
-        state, stats, keys = train_pstep(keys, state, batch, lr, step, FLAGS.sc_loss_every)
+
+        if step%FLAGS.sc_loss_every == 0 or True:
+            # remove dimension for device coz its only run in host core
+            batch = dataset.get_clip_data()
+            grad, sc_loss = clip_utils.update_semantic_loss(model, clip_model,
+                                                                   keys[0], state, batch, lr)
+        else:
+            grad = 0
+            sc_loss = 0.
+        grad, stats, keys = train_pstep(keys, state, batch, lr, step, FLAGS.sc_loss_every, grad)
+                # update semantic loss only on host coz it has biggest memory
+        # e.g. sc_loss_every = 16, device = 8, then every 2 host step have to update semantic loss
+        #new_optimizer = state.optimizer.apply_gradient(grad, learning_rate=lr)
+        #new_state = state.replace(optimizer=new_optimizer)
+        new_state = update_pstep(state, grad, lr)
         if jax.host_id() == 0:
             stats_trace.append(stats)
         if step % FLAGS.gc_every == 0:
             gc.collect()
 
-        # update semantic loss only on host coz it has biggest memory
-        # e.g. sc_loss_every = 16, device = 8, then every 2 host step have to update semantic loss
-        # sc_loss = 0.
-        # if (jax.host_id() == 0) and (cnter < trigger):
-        #     cnter += 1
-        # elif (jax.host_id() == 0) and (cnter == trigger):
-        #     cnter = 1
-        #     # remove dimension for device coz its only run in host core
-        #     #batch["random_rays"] = batch["random_rays"][0, ...]
-        #     #batch["embedding"] = batch["embedding"][0, ...]
-        #     state, sc_loss, keys = clip_utils.update_semantic_loss(model, clip_model,
-        #                                                            keys, state, batch, lr)
+
 
         # Log training summaries. This is put behind a host_id check because in
         # multi-host evaluation, all hosts need to run inference even though we

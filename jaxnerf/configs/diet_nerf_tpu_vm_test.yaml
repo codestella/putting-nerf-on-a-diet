@@ -7,10 +7,10 @@ use_viewdirs: true
 white_bkgd: true
 batch_size: 1024
 randomized: true
-max_steps: 5000
+max_steps: 500000
 print_every: 100
-render_every: 500
-save_every: 500
+render_every: 5000
+save_every: 5000
 clip_model_name: openai/clip-vit-base-patch32
 clip_output_dtype: float32
 sc_loss_factor: 4
