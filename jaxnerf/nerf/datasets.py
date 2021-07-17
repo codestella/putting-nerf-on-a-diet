@@ -123,7 +123,10 @@ class Dataset(threading.Thread):
     def size(self):
         return self.n_examples
 
-    def _train_init(self, flags, clip_model = None):
+    def _loa_renderings(self):
+        raise NotImplementedError
+
+    def _train_init(self, flags, clip_model):
         """Initialize training."""
         self._load_renderings(flags, clip_model)
         self._generate_rays()
@@ -142,7 +145,7 @@ class Dataset(threading.Thread):
                 f"{flags.batching} batching strategy is not implemented.")
 
     def _test_init(self, flags):
-        self._load_renderings(flags)
+        self.renderings = self._load_renderings(flags, clip_model=False)
         self._generate_rays()
         self.it = 0
 
