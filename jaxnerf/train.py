@@ -96,13 +96,6 @@ def train_step(model, clip_model, rng, state, batch, lr, step, K):#, clip_grad):
                      tree_sum_fn(lambda z: jnp.prod(jnp.array(z.shape))))
 
         total_loss = loss + loss_c + FLAGS.weight_decay_mult * weight_l2
-        '''
-        total_loss = jax.lax.cond(step%K == 0,
-            lambda _: total_loss + 1e-3 * clip_utils.semantic_loss(model, clip_model, [rng, key_0, key_1], variables, batch, lr), # exact value of lambda is unknown.
-            lambda _: total_loss, 
-            operand=None
-        )
-        '''
         stats = utils.Stats(loss=loss, psnr=psnr, loss_c=loss_c,
                             psnr_c=psnr_c, weight_l2=weight_l2)
         return total_loss, stats
@@ -126,12 +119,6 @@ def train_step(model, clip_model, rng, state, batch, lr, step, K):#, clip_grad):
         grad = jax.tree_util.tree_map(lambda z: mult * z, grad)
 
     #return grad, state, rng
-
-    def merge_grad(grad, grad_clip):
-        # TODO intergrade grad and grad_clip
-        return grad
-
-    print( jax.tree_map( lambda x: x.shape, grad))
     new_optimizer = state.optimizer.apply_gradient(grad, learning_rate =lr)
     new_state = state.replace(optimizer=new_optimizer)
     return new_state, stats, rng
@@ -185,6 +172,13 @@ def main(unused_argv):
         in_axes=(0, 0, 0, None, None, None),
         donate_argnums=(2,))
 
+    update_pstep = jax.pmap(
+        functools.partial(update_step,),
+        axis_name="batch",
+        in_axes=(0, None, None),
+        donate_argnums=(0,))
+
+
     def render_fn(variables, key_0, key_1, rays):
         return jax.lax.all_gather(
             model.apply(variables, key_0, key_1, rays, FLAGS.randomized),
@@ -225,30 +219,26 @@ def main(unused_argv):
     trigger = int(FLAGS.sc_loss_every / n_local_devices)
 
     for step, batch in zip(range(init_step, FLAGS.max_steps + 1), pdataset):
-        # batch["random_rays"] = batch["random_rays"][0]
-        # batch["embedding"] = batch["embedding"][0]
-        # print(batch["random_rays"].shape, print(batch["rays"].shape))
         if reset_timer:
             t_loop_start = time.time()
             reset_timer = False
         lr = learning_rate_fn(step)
 
-        if step%FLAGS.sc_loss_every == 0 or True:
+        if step%FLAGS.sc_loss_every == 0:
             # remove dimension for device coz its only run in host core
             sc_batch = dataset.get_clip_data()
             sc_loss, sc_grad = clip_utils.update_semantic_loss(model, clip_model,
                                                                keys[0], state, sc_batch, lr)
             sc_grad = flax.jax_utils.replicate(sc_grad)
+            sc_grad = jax.tree_map( lambda x: x[0], sc_grad)
+
         else:
-            sc_grad = 0
             sc_loss = 0.
             
         state, stats, keys = train_pstep(keys, state, batch, lr, step, FLAGS.sc_loss_every)#, grad)
         
-        print( jax.tree_map( lambda x: x.shape, sc_grad))
-        #print( jax.tree_map( lambda x: x.shape, state))
-        new_optimizer = state.optimizer.apply_gradient(sc_grad, learning_rate = lr)
-        state = state.replace(optimizer=new_optimizer)
+        if step%FLAGS.sc_loss_every == 0:
+            state = update_pstep(state, sc_grad, lr)
        
         if jax.host_id() == 0:
             stats_trace.append(stats)
