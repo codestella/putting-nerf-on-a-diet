@@ -178,6 +178,8 @@ def define_flags():
                               "better to be x00 for accurate step time record.")
     flags.DEFINE_integer("gc_every", 10000,
                          "the number of steps to run python garbage collection.")
+    flags.DEFINE_integer("few_shot", -1,
+                         "the number of images.")
 
     # Eval Flags
     flags.DEFINE_bool(
@@ -191,7 +193,6 @@ def define_flags():
         "the size of chunks for evaluation inferences, set to the value that"
         "fits your GPU/TPU memory.")
 
-
 def update_flags(args):
     """Update the flags in `args` with the contents of the config YAML file."""
     pth = path.join(BASE_DIR, args.config + ".yaml")
@@ -202,7 +203,6 @@ def update_flags(args):
     if invalid_args:
         raise ValueError(f"Invalid args {invalid_args} in {pth}.")
     args.__dict__.update(configs)
-
 
 def open_file(pth, mode="r"):
     if not INTERNAL:
