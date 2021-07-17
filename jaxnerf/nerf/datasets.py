@@ -248,7 +248,11 @@ class Blender(Dataset):
                 if clip_model is None:
                     continue
                 embs.append(clip_model.get_image_features(pixel_values=clip_utils.preprocess_for_CLIP(img)))
-            self.embeddings = np.concatenate(embs, 0)
+
+            if clip_model is not None:
+                self.embeddings = np.concatenate(embs, 0)
+            else:
+                self.embeddings = []
         
             self.image_idx = np.arange(self.images.shape[0])
             np.random.shuffle(self.image_idx)
