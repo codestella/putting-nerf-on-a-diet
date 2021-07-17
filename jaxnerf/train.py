@@ -29,7 +29,7 @@ from jax import config
 from jax import random
 import jax.numpy as jnp
 import numpy as np
-import wandb
+# import wandb
 
 from jaxnerf.nerf import datasets
 from jaxnerf.nerf import models
@@ -149,11 +149,9 @@ def main(unused_argv):
     if FLAGS.use_semantic_loss:
         clip_model = clip_utils.init_CLIP(FLAGS.clip_output_dtype,
                                           FLAGS.clip_model_name)
-        print("semantic loss is used. CLIP model is setup")
     else:
         clip_model = None
-        print("semantic loss is NOT used. CLIP model set to None")
-
+    
     dataset = datasets.get_dataset("train", FLAGS, clip_model)
     test_dataset = datasets.get_dataset("test", FLAGS, clip_model)
 

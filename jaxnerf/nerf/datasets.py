@@ -31,7 +31,7 @@ from PIL import Image
 from jaxnerf.nerf import utils
 from jaxnerf.nerf import clip_utils
 
-def get_dataset(split, args, clip_model):
+def get_dataset(split, args, clip_model = None):
     return dataset_dict[args.dataset](split, args, clip_model)
 
 
@@ -67,6 +67,7 @@ class Dataset(threading.Thread):
         self.daemon = True
         self.use_pixel_centers = flags.use_pixel_centers
         self.split = split
+
         if split == "train":
             self._train_init(flags, clip_model)
         elif split == "test":
@@ -123,9 +124,6 @@ class Dataset(threading.Thread):
     def size(self):
         return self.n_examples
 
-    def _loa_renderings(self):
-        raise NotImplementedError
-
     def _train_init(self, flags, clip_model):
         """Initialize training."""
         self._load_renderings(flags, clip_model)
@@ -145,7 +143,7 @@ class Dataset(threading.Thread):
                 f"{flags.batching} batching strategy is not implemented.")
 
     def _test_init(self, flags):
-        self._load_renderings(flags, clip_model=None)
+        self._load_renderings(flags, clip_model = None)
         self._generate_rays()
         self.it = 0
 
@@ -221,7 +219,7 @@ class Dataset(threading.Thread):
 class Blender(Dataset):
     """Blender Dataset."""
 
-    def _load_renderings(self, flags, clip_model):
+    def _load_renderings(self, flags, clip_model = None):
         """Load images from disk."""
         if flags.render_path:
             raise ValueError("render_path cannot be used for the blender dataset.")
@@ -241,18 +239,12 @@ class Blender(Dataset):
         self.focal = .5 * self.w / np.tan(.5 * camera_angle_x)
         self.n_examples = self.images.shape[0]
 
-        if flags.use_semantic_loss:
+        if flags.use_semantic_loss and clip_model is not None:
             embs = []
             for img in self.images:
                 img = np.expand_dims(np.transpose(img,[2,0,1]), 0)
-                if clip_model is None:
-                    continue
-                embs.append(clip_model.get_image_features(pixel_values=clip_utils.preprocess_for_CLIP(img)))
-
-            if clip_model is not None:
-                self.embeddings = np.concatenate(embs, 0)
-            else:
-                self.embeddings = []
+                embs.append(clip_model.get_image_features(pixel_values = clip_utils.preprocess_for_CLIP(img)))
+            self.embeddings = np.concatenate(embs, 0)
         
             self.image_idx = np.arange(self.images.shape[0])
             np.random.shuffle(self.image_idx)
