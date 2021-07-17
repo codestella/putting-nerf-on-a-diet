@@ -63,8 +63,8 @@ def define_flags():
                         "using config files to set hyperparameters.")
 
     # CLIP part Flags
-    flags.DEFINE_string("use_semantic_loss", True,
-                        "whether use semantic loss or not")
+    flags.DEFINE_bool("use_semantic_loss", True,
+                      "whether use semantic loss or not")
     flags.DEFINE_string("precompute_pkl_path", None,
                         "where to load the pickle file that precompute image features")
     flags.DEFINE_string("clip_model_name", "openai/clip-vit-base-patch32", "model type for CLIP")
