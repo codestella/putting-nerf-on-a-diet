@@ -15,7 +15,6 @@
 
 # Lint as: python3
 """Training script for Nerf."""
-import math
 import functools
 import gc
 import time
@@ -30,6 +29,7 @@ from jax import random
 import jax.numpy as jnp
 import numpy as np
 import wandb
+from tqdm import tqdm
 
 from jaxnerf.nerf import datasets
 from jaxnerf.nerf import models
@@ -130,7 +130,7 @@ def update_step(state, grad, lr):
 
 
 def main(unused_argv):
-    # wandb.init(project="hf-flax-clip-nerf", entity="wandb", sync_tensorboard=True)
+    wandb.init(project="hf-flax-clip-nerf", entity="wandb", sync_tensorboard=True)
     rng = random.PRNGKey(20200823)
     # Shift the numpy random seed by host_id() to shuffle data loaded by different
     # hosts.
@@ -223,7 +223,7 @@ def main(unused_argv):
     cnter = 1
     trigger = int(FLAGS.sc_loss_every / n_local_devices)
 
-    for step, batch in zip(range(init_step, FLAGS.max_steps + 1), pdataset):
+    for step, batch in tqdm(zip(range(init_step, FLAGS.max_steps + 1), pdataset)):
         if reset_timer:
             t_loop_start = time.time()
             reset_timer = False
