@@ -49,7 +49,7 @@ if "COLAB_TPU_ADDR" in os.environ:
 print(f"detected device: {jax.local_devices()}")
 
 
-def train_step(model, clip_model, rng, state, batch, lr, step, K, clip_grad):
+def train_step(model, clip_model, rng, state, batch, lr, step, K):#, clip_grad):
     # TODO make clip_grad input enable
     """One optimization step.
 
@@ -105,11 +105,13 @@ def train_step(model, clip_model, rng, state, batch, lr, step, K, clip_grad):
         '''
         stats = utils.Stats(loss=loss, psnr=psnr, loss_c=loss_c,
                             psnr_c=psnr_c, weight_l2=weight_l2)
+        return total_loss, stats
+
     (_, stats), grad = (
         jax.value_and_grad(loss_fn, has_aux=True)(state.optimizer.target))
     grad = jax.lax.pmean(grad, axis_name="batch")
     stats = jax.lax.pmean(stats, axis_name="batch")
-
+    
     # Clip the gradient by value.
     if FLAGS.grad_max_val > 0:
         clip_fn = lambda z: jnp.clip(z, -FLAGS.grad_max_val, FLAGS.grad_max_val)
@@ -123,13 +125,16 @@ def train_step(model, clip_model, rng, state, batch, lr, step, K, clip_grad):
         mult = jnp.minimum(1, FLAGS.grad_max_norm / (1e-7 + grad_norm))
         grad = jax.tree_util.tree_map(lambda z: mult * z, grad)
 
+    #return grad, state, rng
+
     def merge_grad(grad, grad_clip):
         # TODO intergrade grad and grad_clip
         return grad
 
-    new_optimizer = state.optimizer.apply_gradient(
-        jax.lax.cond(step%K == 0, merge_grad(grad, clip_grad), lambda _: grad), learning_rate =lr)
-    return new_state, stats, rng, grad
+    print( jax.tree_map( lambda x: x.shape, grad))
+    new_optimizer = state.optimizer.apply_gradient(grad, learning_rate =lr)
+    new_state = state.replace(optimizer=new_optimizer)
+    return new_state, stats, rng
 
 def update_step(state, grad, lr):
     new_optimizer = state.optimizer.apply_gradient(grad, learning_rate=lr)
@@ -177,7 +182,7 @@ def main(unused_argv):
     train_pstep = jax.pmap(
         functools.partial(train_step, model, clip_model),
         axis_name="batch",
-        in_axes=(0, 0, 0, None, None, None, None),
+        in_axes=(0, 0, 0, None, None, None),
         donate_argnums=(2,))
 
     def render_fn(variables, key_0, key_1, rays):
@@ -203,7 +208,6 @@ def main(unused_argv):
 
     # for distributive training
     state = flax.jax_utils.replicate(state)
-
     if jax.host_id() == 0:
         summary_writer = tensorboard.SummaryWriter(FLAGS.train_dir)
 
@@ -231,24 +235,25 @@ def main(unused_argv):
 
         if step%FLAGS.sc_loss_every == 0 or True:
             # remove dimension for device coz its only run in host core
-            batch = dataset.get_clip_data()
-            grad, sc_loss = clip_utils.update_semantic_loss(model, clip_model,
-                                                                   keys[0], state, batch, lr)
+            sc_batch = dataset.get_clip_data()
+            sc_loss, sc_grad = clip_utils.update_semantic_loss(model, clip_model,
+                                                               keys[0], state, sc_batch, lr)
+            sc_grad = flax.jax_utils.replicate(sc_grad)
         else:
-            grad = 0
+            sc_grad = 0
             sc_loss = 0.
-        grad, stats, keys = train_pstep(keys, state, batch, lr, step, FLAGS.sc_loss_every, grad)
-                # update semantic loss only on host coz it has biggest memory
-        # e.g. sc_loss_every = 16, device = 8, then every 2 host step have to update semantic loss
-        #new_optimizer = state.optimizer.apply_gradient(grad, learning_rate=lr)
-        #new_state = state.replace(optimizer=new_optimizer)
-        new_state = update_pstep(state, grad, lr)
+            
+        state, stats, keys = train_pstep(keys, state, batch, lr, step, FLAGS.sc_loss_every)#, grad)
+        
+        print( jax.tree_map( lambda x: x.shape, sc_grad))
+        #print( jax.tree_map( lambda x: x.shape, state))
+        new_optimizer = state.optimizer.apply_gradient(sc_grad, learning_rate = lr)
+        state = state.replace(optimizer=new_optimizer)
+       
         if jax.host_id() == 0:
             stats_trace.append(stats)
         if step % FLAGS.gc_every == 0:
             gc.collect()
-
-
 
         # Log training summaries. This is put behind a host_id check because in
         # multi-host evaluation, all hosts need to run inference even though we
