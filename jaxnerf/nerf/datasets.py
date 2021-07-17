@@ -222,7 +222,7 @@ class Blender(Dataset):
         """Load images from disk."""
         if flags.render_path:
             raise ValueError("render_path cannot be used for the blender dataset.")
-        cams, images, meta = self.load_files(flags.data_dir, self.split, flags.factor)
+        cams, images, meta = self.load_files(flags.data_dir, self.split, flags.factor, flags.few_shot)
 
         # load in CLIP precomputed image features
         self.images = np.stack(images, axis=0)
@@ -253,12 +253,18 @@ class Blender(Dataset):
         # self.precompute_pkl_path = flags.precompute_pkl_path
 
     @staticmethod
-    def load_files(data_dir, split, factor):
+    def load_files(data_dir, split, factor, few_shot):
         with utils.open_file(path.join(data_dir, "transforms_{}.json".format(split)), "r") as fp:
             meta = json.load(fp)
         images = []
         cams = []
-        for i in range(len(meta["frames"])):
+
+        frames = np.arange(len(meta["frames"]))
+        if few_shot > 0 and split == 'train':
+            np.random.shuffle(frames)
+            frames = frames[:few_shot]
+
+        for i in frames:
             frame = meta["frames"][i]
             fname = os.path.join(data_dir, frame["file_path"] + ".png")
             with utils.open_file(fname, "rb") as imgin:

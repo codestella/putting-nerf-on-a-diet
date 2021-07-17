@@ -16,4 +16,4 @@ clip_output_dtype: float32
 sc_loss_factor: 4
 sc_loss_every: 16
 sc_loss_mult: 10
-few_shot: -1
+few_shot: 8
