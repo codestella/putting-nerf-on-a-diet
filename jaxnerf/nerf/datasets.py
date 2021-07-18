@@ -255,6 +255,7 @@ class Blender(Dataset):
             
         self.img_queue = []
 
+
     @staticmethod
     def load_files(data_dir, split, factor, few_shot):
         with utils.open_file(path.join(data_dir, "transforms_{}.json".format(split)), "r") as fp:
