@@ -253,6 +253,7 @@ class Blender(Dataset):
         # self.embeddings = utils.read_pickle(flags.precompute_pkl_path)
         # self.precompute_pkl_path = flags.precompute_pkl_path
 
+
     @staticmethod
     def load_files(data_dir, split, factor, few_shot):
         with utils.open_file(path.join(data_dir, "transforms_{}.json".format(split)), "r") as fp:
