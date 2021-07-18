@@ -222,7 +222,8 @@ def main(unused_argv):
     # for semantic loss update
     cnter = 1
     trigger = int(FLAGS.sc_loss_every / n_local_devices)
-    src_image = None
+
+    sc_image = None
     for step, batch in tqdm(zip(range(init_step, FLAGS.max_steps + 1), pdataset)):
         if reset_timer:
             t_loop_start = time.time()
@@ -230,12 +231,13 @@ def main(unused_argv):
         lr = learning_rate_fn(step)
 
         if step%FLAGS.sc_loss_every == 0 and FLAGS.use_semantic_loss:
+            # remove dimension for device coz its only run in host core
             sc_batch = dataset.get_clip_data()
-            sc_loss, sc_grad, src_image = clip_utils.update_semantic_loss(model, clip_model, render_pfn,
+            sc_loss, sc_grad, sc_image = clip_utils.update_semantic_loss(model, clip_model,
                                                                keys[0], state, sc_batch, lr)
             sc_grad = flax.jax_utils.replicate(sc_grad)
             sc_grad = jax.tree_map( lambda x: x[0], sc_grad)
-
+            
         else:
             sc_loss = 0.
             
@@ -310,12 +312,12 @@ def main(unused_argv):
                 print(f"Eval {step}: {eval_time:0.3f}s., {rays_per_sec:0.0f} rays/sec")
                 summary_writer.scalar("test_psnr", psnr, step)
                 summary_writer.scalar("test_ssim", ssim, step)
+                if sc_image is not None:
+                    summary_writer .image("random_ray_image", sc_image, step)
                 summary_writer.image("test_pred_color", pred_color, step)
                 summary_writer.image("test_pred_disp", pred_disp, step)
                 summary_writer.image("test_pred_acc", pred_acc, step)
                 summary_writer.image("test_target", test_case["pixels"], step)
-                if src_image is not None:
-                    summary_writer.image("random_image", src_image, step)
 
     if FLAGS.max_steps % FLAGS.save_every != 0:
         state = jax.device_get(jax.tree_map(lambda x: x[0], state))

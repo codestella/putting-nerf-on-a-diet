@@ -7,7 +7,7 @@ use_viewdirs: true
 white_bkgd: true
 batch_size: 1024
 randomized: true
-max_steps: 100000
+max_steps: 200000
 print_every: 1000
 render_every: 5000
 save_every: 5000
