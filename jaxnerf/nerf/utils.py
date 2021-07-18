@@ -249,7 +249,6 @@ def render_image(render_fn, rays, rng, normalize_disp, chunk=8192):
     height, width = rays[0].shape[:2]
     num_rays = height * width
     rays = namedtuple_map(lambda r: r.reshape((num_rays, -1)), rays)
-
     unused_rng, key_0, key_1 = jax.random.split(rng, 3)
     host_id = jax.host_id()
     results = []

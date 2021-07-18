@@ -28,12 +28,8 @@ from jax import config
 from jax import random
 import jax.numpy as jnp
 import numpy as np
-<<<<<<< HEAD
 # import wandb
-=======
-import wandb
 from tqdm import tqdm
->>>>>>> nerf-with-clip
 
 from jaxnerf.nerf import datasets
 from jaxnerf.nerf import models
@@ -134,7 +130,7 @@ def update_step(state, grad, lr):
 
 
 def main(unused_argv):
-    wandb.init(project="hf-flax-clip-nerf", entity="wandb", sync_tensorboard=True)
+    #wandb.init(project="hf-flax-clip-nerf", entity="wandb", sync_tensorboard=True)
     rng = random.PRNGKey(20200823)
     # Shift the numpy random seed by host_id() to shuffle data loaded by different
     # hosts.
@@ -153,8 +149,10 @@ def main(unused_argv):
     if FLAGS.use_semantic_loss:
         clip_model = clip_utils.init_CLIP(FLAGS.clip_output_dtype,
                                           FLAGS.clip_model_name)
+        print('semantic loss ACTIVATED, CLIP is set up')
     else:
         clip_model = None
+        print('semantic loss DEACTIVATED, CLIP is set to None')
     
     dataset = datasets.get_dataset("train", FLAGS, clip_model)
     test_dataset = datasets.get_dataset("test", FLAGS, clip_model)
@@ -224,7 +222,7 @@ def main(unused_argv):
     # for semantic loss update
     cnter = 1
     trigger = int(FLAGS.sc_loss_every / n_local_devices)
-
+    src_image = None
     for step, batch in tqdm(zip(range(init_step, FLAGS.max_steps + 1), pdataset)):
         if reset_timer:
             t_loop_start = time.time()
@@ -232,9 +230,8 @@ def main(unused_argv):
         lr = learning_rate_fn(step)
 
         if step%FLAGS.sc_loss_every == 0 and FLAGS.use_semantic_loss:
-            # remove dimension for device coz its only run in host core
             sc_batch = dataset.get_clip_data()
-            sc_loss, sc_grad = clip_utils.update_semantic_loss(model, clip_model,
+            sc_loss, sc_grad, src_image = clip_utils.update_semantic_loss(model, clip_model, render_pfn,
                                                                keys[0], state, sc_batch, lr)
             sc_grad = flax.jax_utils.replicate(sc_grad)
             sc_grad = jax.tree_map( lambda x: x[0], sc_grad)
@@ -317,6 +314,8 @@ def main(unused_argv):
                 summary_writer.image("test_pred_disp", pred_disp, step)
                 summary_writer.image("test_pred_acc", pred_acc, step)
                 summary_writer.image("test_target", test_case["pixels"], step)
+                if src_image is not None:
+                    summary_writer.image("random_image", src_image, step)
 
     if FLAGS.max_steps % FLAGS.save_every != 0:
         state = jax.device_get(jax.tree_map(lambda x: x[0], state))
