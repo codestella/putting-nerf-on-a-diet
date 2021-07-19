@@ -172,7 +172,7 @@ def main(unused_argv):
             fourcc = cv2.VideoWriter_fourcc(*'MP4V')
             fps = 10.0
             out = cv2.VideoWriter(os.path.join(out_dir, "rendering_video.mp4"), fourcc, fps,
-                                  (img.shape[1], img.shape[0]))
+                                  (800, 800))
 
             for i in range(len(sorted_files)):
                 img = cv2.imread(sorted_files[i], cv2.IMREAD_COLOR)
