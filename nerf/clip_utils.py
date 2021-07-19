@@ -57,8 +57,8 @@ def rot_theta(th):
 
 def pose_spherical(radius, theta, phi):
     c2w = trans_t(radius)
-    c2w = rot_phi(phi / 180. * jnp.pi) @ c2w
-    c2w = rot_theta(theta / 180. * jnp.pi) @ c2w
+    c2w = rot_phi(phi) @ c2w
+    c2w = rot_theta(theta) @ c2w
     c2w = jnp.array([[-1, 0, 0, 0], [0, 0, 1, 0], [0, 1, 0, 0], [0, 0, 0, 1]]) @ c2w
     return c2w
 

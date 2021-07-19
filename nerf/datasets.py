@@ -302,7 +302,7 @@ class Blender(Dataset):
         src_seed = int(np.random.randint(0, self.max_steps, ()))
         src_rng = jax.random.PRNGKey(src_seed)
         src_camtoworld = np.array(clip_utils.random_pose(src_rng, (self.near, self.far)))
-        random_rays = self.camtoworld_matrix_to_rays(src_camtoworld, downsample = 16)
+        random_rays = self.camtoworld_matrix_to_rays(src_camtoworld, downsample = 14)
         random_rays = utils.Rays(origins=np.reshape(random_rays[0], [-1,3]), directions=np.reshape(random_rays[1], [-1,3]), viewdirs=np.reshape(random_rays[2], [-1,3]))
         batch_dict["random_rays"] = random_rays
         return batch_dict
