@@ -167,18 +167,18 @@ def main(unused_argv):
                 #f.write("{}".format(np.mean(np.array(lpips_values))))
             imglist = glob.glob(os.path.join(out_dir, "[0-9][0-9][0-9].png"))
             sorted_files = sorted(imglist, key=lambda x: int(x.split('/')[-1].split('.')[0]))
-            #imglist2 = glob.glob(os.path.join(out_dir, "disp_[0-9][0-9][0-9].png"))
-            #sorted_files2 = sorted(imglist2, key=lambda x: int(x.split('/')[-1].split('.')[0].split('_')[-1]))
+            imglist2 = glob.glob(os.path.join(out_dir, "disp_[0-9][0-9][0-9].png"))
+            sorted_files2 = sorted(imglist2, key=lambda x: int(x.split('/')[-1].split('.')[0].split('_')[-1]))
             fourcc = cv2.VideoWriter_fourcc(*'MP4V')
             fps = 10.0
             out = cv2.VideoWriter(os.path.join(out_dir, "rendering_video.mp4"), fourcc, fps,
-                                  (img.shape[1], img.shape[0]))
+                                  (2 * img.shape[1], img.shape[0]))
 
-            for i in range(len(sorted_files)):
-                img = cv2.imread(sorted_files[i], cv2.IMREAD_COLOR)
-                #img2 = cv2.imread(imglist2[i], cv2.IMREAD_COLOR)
-                #catimg = np.concatenate((img, img2), axis=1)
-                out.write(img)
+            for i in range(len(imglist)):
+                img = cv2.imread(imglist[i], cv2.IMREAD_COLOR)
+                img2 = cv2.imread(imglist2[i], cv2.IMREAD_COLOR)
+                catimg = np.concatenate((img, img2), axis=1)
+                out.write(catimg)
 
             out.release()
         if FLAGS.eval_once:
