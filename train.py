@@ -31,10 +31,10 @@ import numpy as np
 # import wandb
 from tqdm import tqdm
 
-from jaxnerf.nerf import datasets
-from jaxnerf.nerf import models
-from jaxnerf.nerf import utils
-from jaxnerf.nerf import clip_utils
+from nerf import datasets
+from nerf import models
+from nerf import utils
+from nerf import clip_utils
 
 FLAGS = flags.FLAGS
 
@@ -220,9 +220,6 @@ def main(unused_argv):
     reset_timer = True
 
     # for semantic loss update
-    cnter = 1
-    trigger = int(FLAGS.sc_loss_every / n_local_devices)
-
     sc_image = None
     for step, batch in tqdm(zip(range(init_step, FLAGS.max_steps + 1), pdataset)):
         if reset_timer:
