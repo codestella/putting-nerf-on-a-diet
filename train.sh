@@ -1,4 +1,3 @@
-# coding=utf-8
 # Copyright 2021 The Google Research Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,3 +12,23 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+#!/bin/bash
+CONFIG=$1
+DATA_ROOT=$2
+ROOT_DIR=/tmp/jaxnerf/"$CONFIG"
+if [ $CONFIG == "llff" ]
+then
+  SCENES="room fern leaves fortress orchids flower trex horns"
+  DATA_FOLDER="nerf_llff_data"
+else
+  SCENES="lego chair drums ficus hotdog materials mic ship"
+  DATA_FOLDER="nerf_synthetic"
+fi
+
+# launch training jobs for all scenes.
+for scene in $SCENES; do
+  python -m jaxnerf.train \
+    --data_dir="$DATA_ROOT"/"$DATA_FOLDER"/"$scene" \
+    --train_dir="$ROOT_DIR"/"$scene" \
+    --config=configs/"$CONFIG"
+done
