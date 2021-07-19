@@ -28,8 +28,8 @@ import jax
 import numpy as np
 from PIL import Image
 
-from jaxnerf.nerf import utils
-from jaxnerf.nerf import clip_utils
+from nerf import utils
+from nerf import clip_utils
 
 def get_dataset(split, args, clip_model = None):
     return dataset_dict[args.dataset](split, args, clip_model)
@@ -82,7 +82,6 @@ class Dataset(threading.Thread):
         self.far = flags.far
         self.near = flags.near
         self.max_steps = flags.max_steps
-        self.sc_loss_factor = flags.sc_loss_factor
         self.start()
 
     def __iter__(self):
@@ -225,7 +224,6 @@ class Blender(Dataset):
             raise ValueError("render_path cannot be used for the blender dataset.")
         cams, images, meta = self.load_files(flags.data_dir, self.split, flags.factor, flags.few_shot)
 
-        # load in CLIP precomputed image features
         self.images = np.stack(images, axis=0)
         if flags.white_bkgd:
             self.images = (self.images[..., :3] * self.images[..., -1:] +
@@ -249,10 +247,6 @@ class Blender(Dataset):
             self.image_idx = np.arange(self.images.shape[0])
             np.random.shuffle(self.image_idx)
             self.image_idx = self.image_idx.tolist()
-            
-        # self.embeddings = utils.read_pickle(flags.precompute_pkl_path)
-        # self.precompute_pkl_path = flags.precompute_pkl_path
-
 
     @staticmethod
     def load_files(data_dir, split, factor, few_shot):
@@ -291,18 +285,6 @@ class Blender(Dataset):
         batch_dict = super(Blender, self)._next_train()
         if self.batching == "single_image":
             image_index = batch_dict.pop("image_index")
-            # target image for CLIP
-            '''
-            batch_dict["embedding"] = self.embeddings[image_index]
-
-            # source rays for CLIP (for constructing source image later)
-            src_seed = int(np.random.randint(0, self.max_steps, ()))
-            src_rng = jax.random.PRNGKey(src_seed)
-            src_camtoworld = np.array(clip_utils.random_pose(src_rng, (self.near, self.far)))
-            random_rays = self.camtoworld_matrix_to_rays(src_camtoworld, downsample = 16)
-            random_rays = utils.Rays(origins=np.reshape(random_rays[0], [-1,3]), directions=np.reshape(random_rays[1], [-1,3]), viewdirs=np.reshape(random_rays[2], [-1,3]))
-            batch_dict["random_rays"] = random_rays
-            '''
         else:
             raise NotImplementedError
         return batch_dict
@@ -317,7 +299,6 @@ class Blender(Dataset):
         batch_dict = {}
         batch_dict["embedding"] = self.embeddings[image_index]
 
-        # source rays for CLIP (for constructing source image later)
         src_seed = int(np.random.randint(0, self.max_steps, ()))
         src_rng = jax.random.PRNGKey(src_seed)
         src_camtoworld = np.array(clip_utils.random_pose(src_rng, (self.near, self.far)))

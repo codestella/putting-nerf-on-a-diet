@@ -20,8 +20,8 @@ from flax import linen as nn
 from jax import random
 import jax.numpy as jnp
 
-from jaxnerf.nerf import model_utils
-from jaxnerf.nerf import utils
+from nerf import model_utils
+from nerf import utils
 
 
 def get_model(key, example_batch, args):
