@@ -44,15 +44,15 @@ def trans_t(t):
 def rot_phi(phi):
     return jnp.array([
         [1, 0, 0, 0],
-        [0, jnp.cos(phi), -np.sin(phi), 0],
-        [0, jnp.sin(phi), jnp.cos(phi), 0],
+        [0, jnp.cos(phi), jnp.sin(phi), 0],
+        [0,-jnp.sin(phi), jnp.cos(phi), 0],
         [0, 0, 0, 1]], dtype=jnp.float32)
 
 def rot_theta(th):
     return jnp.array([
-        [np.cos(th), 0, -np.sin(th), 0],
+        [jnp.cos(th), 0,-jnp.sin(th), 0],
         [0, 1, 0, 0],
-        [np.sin(th), 0, jnp.cos(th), 0],
+        [jnp.sin(th), 0, jnp.cos(th), 0],
         [0, 0, 0, 1]], dtype=jnp.float32)
 
 def pose_spherical(radius, theta, phi):
@@ -65,8 +65,8 @@ def pose_spherical(radius, theta, phi):
 def random_pose(rng, bds):
     rng, *rng_inputs = jax.random.split(rng, 3)
     radius = random.uniform(rng_inputs[1], minval=bds[0], maxval=bds[1])
-    theta = random.uniform(rng_inputs[1], minval=0, maxval=jnp.pi/2)
-    phi = random.uniform(rng_inputs[1], minval=0, maxval=jnp.pi*2)
+    theta = random.uniform(rng_inputs[1], minval=-jnp.pi, maxval=jnp.pi)
+    phi = random.uniform(rng_inputs[1], minval=0, maxval=jnp.pi/2)
     return pose_spherical(radius, theta, phi)
 
 def preprocess_for_CLIP(image):
