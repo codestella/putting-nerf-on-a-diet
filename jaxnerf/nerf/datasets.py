@@ -211,13 +211,10 @@ class Dataset(threading.Thread):
         camera_dirs = np.stack([(x - self.w * 0.5) / self.focal,
                                 -(y - self.h * 0.5) / self.focal, -np.ones_like(x)],
                                axis=-1)
-        directions = ((camera_dirs[None, ..., None, :] *
-                       camtoworld[:, None, None, :3, :3]).sum(axis=-1))
-        origins = np.broadcast_to(camtoworld[:, None, None, :3, -1],
-                                  directions.shape)
+        directions = (camera_dirs[..., None, :] * camtoworld[None, None, :3, :3]).sum(axis=-1)
+        origins = np.broadcast_to(camtoworld[None, None, :3, -1], directions.shape)
         viewdirs = directions / np.linalg.norm(directions, axis=-1, keepdims=True)
-        return utils.Rays(
-            origins=origins, directions=directions, viewdirs=viewdirs)
+        return utils.Rays(origins=origins, directions=directions, viewdirs=viewdirs)
 
 class Blender(Dataset):
     """Blender Dataset."""
@@ -253,7 +250,8 @@ class Blender(Dataset):
             np.random.shuffle(self.image_idx)
             self.image_idx = self.image_idx.tolist()
             
-        self.img_queue = []
+        # self.embeddings = utils.read_pickle(flags.precompute_pkl_path)
+        # self.precompute_pkl_path = flags.precompute_pkl_path
 
 
     @staticmethod
@@ -268,7 +266,6 @@ class Blender(Dataset):
             np.random.seed(0)
             np.random.shuffle(frames)
             frames = frames[:few_shot]
-            print(frames)
 
         for i in frames:
             frame = meta["frames"][i]
@@ -287,7 +284,6 @@ class Blender(Dataset):
                     raise ValueError("Blender dataset only supports factor=0 or 2 or 4, {} "
                                      "set.".format(factor))
             cams.append(np.array(frame["transform_matrix"], dtype=np.float32))
-            # print(cams[-1])
             images.append(image)
         return cams, images, meta
 
@@ -296,9 +292,19 @@ class Blender(Dataset):
         if self.batching == "single_image":
             image_index = batch_dict.pop("image_index")
             # target image for CLIP
+            '''
+            batch_dict["embedding"] = self.embeddings[image_index]
+
+            # source rays for CLIP (for constructing source image later)
+            src_seed = int(np.random.randint(0, self.max_steps, ()))
+            src_rng = jax.random.PRNGKey(src_seed)
+            src_camtoworld = np.array(clip_utils.random_pose(src_rng, (self.near, self.far)))
+            random_rays = self.camtoworld_matrix_to_rays(src_camtoworld, downsample = 16)
+            random_rays = utils.Rays(origins=np.reshape(random_rays[0], [-1,3]), directions=np.reshape(random_rays[1], [-1,3]), viewdirs=np.reshape(random_rays[2], [-1,3]))
+            batch_dict["random_rays"] = random_rays
+            '''
         else:
             raise NotImplementedError
-
         return batch_dict
 
     def get_clip_data(self):
@@ -314,10 +320,9 @@ class Blender(Dataset):
         # source rays for CLIP (for constructing source image later)
         src_seed = int(np.random.randint(0, self.max_steps, ()))
         src_rng = jax.random.PRNGKey(src_seed)
-        src_camtoworld = np.expand_dims(np.array(clip_utils.random_pose(src_rng, (self.near, self.far))), 0)
+        src_camtoworld = np.array(clip_utils.random_pose(src_rng, (self.near, self.far)))
         random_rays = self.camtoworld_matrix_to_rays(src_camtoworld, downsample = 16)
-        random_rays = utils.namedtuple_map(lambda r: r[0],
-                                              random_rays)
+        random_rays = utils.Rays(origins=np.reshape(random_rays[0], [-1,3]), directions=np.reshape(random_rays[1], [-1,3]), viewdirs=np.reshape(random_rays[2], [-1,3]))
         batch_dict["random_rays"] = random_rays
         return batch_dict
 

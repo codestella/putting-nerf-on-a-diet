@@ -75,7 +75,7 @@ def define_flags():
                          "its compounded on top of another flag: factor")
     flags.DEFINE_integer("sc_loss_every", 16,
                          "no. of steps to take before performing semantic loss evaluation")
-    flags.DEFINE_float("sc_loss_mult", 10.,
+    flags.DEFINE_float("sc_loss_mult", 1e-3,
                        "weighting for semantic loss from CLIP")
 
     # Dataset Flags

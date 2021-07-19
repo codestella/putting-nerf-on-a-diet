@@ -49,7 +49,7 @@ if "COLAB_TPU_ADDR" in os.environ:
 print(f"detected device: {jax.local_devices()}")
 
 
-def train_step(model, clip_model, rng, state, batch, lr, step, K):#, clip_grad):
+def train_step(model, clip_model, rng, state, batch, lr, step, K,):
     # TODO make clip_grad input enable
     """One optimization step.
 
@@ -234,10 +234,10 @@ def main(unused_argv):
             # remove dimension for device coz its only run in host core
             sc_batch = dataset.get_clip_data()
             sc_loss, sc_grad, sc_image = clip_utils.update_semantic_loss(model, clip_model,
-                                                               keys[0], state, sc_batch, lr)
+                                                               keys[0], state, sc_batch, lr, FLAGS.sc_loss_mult)
             sc_grad = flax.jax_utils.replicate(sc_grad)
             sc_grad = jax.tree_map( lambda x: x[0], sc_grad)
-            
+        
         else:
             sc_loss = 0.
             
