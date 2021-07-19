@@ -14,6 +14,10 @@ https://discuss.huggingface.co/t/open-to-the-community-community-week-using-jax-
 We will also upload our project on the Hugging Face Hub Repository. 
 [https://huggingface.co/flax-community/putting-nerf-on-a-diet/](https://huggingface.co/flax-community/putting-nerf-on-a-diet/)
 
+##  Demo: 
+
+![chair_nerf](./demo/chair_nerf.gif)
+
 ## Our Teams
 
 | Teams            | Members                                                                                                                                                        |
