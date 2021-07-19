@@ -65,8 +65,8 @@ def pose_spherical(radius, theta, phi):
 def random_pose(rng, bds):
     rng, *rng_inputs = jax.random.split(rng, 3)
     radius = random.uniform(rng_inputs[1], minval=bds[0], maxval=bds[1])
-    theta = random.uniform(rng_inputs[1], minval=0, maxval=2 * jnp.pi)
-    phi = random.uniform(rng_inputs[1], minval=0, maxval=np.pi / 2)
+    theta = random.uniform(rng_inputs[1], minval=0, maxval=jnp.pi/2)
+    phi = random.uniform(rng_inputs[1], minval=0, maxval=jnp.pi*2)
     return pose_spherical(radius, theta, phi)
 
 def preprocess_for_CLIP(image):
