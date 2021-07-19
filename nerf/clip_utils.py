@@ -28,7 +28,7 @@ def update_semantic_loss(model, clip_model, rng, state, batch, lr, gamma):
         src_embedding /= jnp.linalg.norm(src_embedding, axis=-1, keepdims=True)
         src_embedding = jnp.array(src_embedding)
         target_embedding = batch["embedding"]
-        sc_loss = 0.5 * FLAGS.sc_loss_mult * jnp.sum((src_embedding - target_embedding) ** 2) / src_embedding.shape[0]
+        sc_loss = 0.5 * jnp.sum((src_embedding - target_embedding) ** 2) / src_embedding.shape[0]
         return sc_loss * gamma, src_image
 
     (sc_loss, src_image), grad = jax.value_and_grad(semantic_loss, has_aux = True)(jax.device_get(jax.tree_map(lambda x:x[0], state)).optimizer.target)
