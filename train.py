@@ -254,6 +254,7 @@ def main(unused_argv):
         if jax.host_id() == 0:
             if step % FLAGS.print_every == 0:
                 summary_writer.scalar("train_loss", stats.loss[0], step)
+                summary_writer.scalar("sc_loss", sc_loss, step)
                 summary_writer.scalar("train_psnr", stats.psnr[0], step)
                 summary_writer.scalar("train_loss_coarse", stats.loss_c[0], step)
                 summary_writer.scalar("train_psnr_coarse", stats.psnr_c[0], step)
