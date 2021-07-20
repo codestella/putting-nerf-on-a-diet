@@ -189,6 +189,9 @@ def define_flags():
         "chunk", 1024,
         "the size of chunks for evaluation inferences, set to the value that"
         "fits your GPU/TPU memory.")
+    flags.DEFINE_bool("generate_gif_only", False,
+                      "in eval.py, we only generate GIF file for the trained model")
+
 
 def update_flags(args):
     """Update the flags in `args` with the contents of the config YAML file."""

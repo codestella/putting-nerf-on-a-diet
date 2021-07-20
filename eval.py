@@ -130,6 +130,17 @@ def main(unused_argv):
         summary_writer = tensorboard.SummaryWriter(
             path.join(FLAGS.train_dir, "eval"))
 
+    if FLAGS.generate_gif_only:
+        print('generate GIF file only')
+        _radius = 4.
+        _phi = (30 * math.pi) / 180
+        _gif_fn = os.path.join(out_dir, 'spinning.gif')
+        generate_spinning_gif(_radius, _phi, _gif_fn, frame_n=30)
+        print(f'GIF file for spinning views written: {_gif_fn}')
+    else:
+        print('generate GIF file AND evaluate model performance')
+
+
     while True:
         state = checkpoints.restore_checkpoint(FLAGS.train_dir, state)
         step = int(state.optimizer.state.step)
