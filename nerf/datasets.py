@@ -282,6 +282,8 @@ class Blender(Dataset):
                                      "set.".format(factor))
             cams.append(np.array(frame["transform_matrix"], dtype=np.float32))
             images.append(image)
+
+        print(f'No. of training samples: {len(frames)}')
         return cams, images, meta
 
     def _next_train(self):
