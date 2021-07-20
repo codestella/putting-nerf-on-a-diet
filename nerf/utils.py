@@ -186,7 +186,7 @@ def define_flags():
     flags.DEFINE_bool("save_output", True,
                       "save predicted images to disk if True.")
     flags.DEFINE_integer(
-        "chunk", 8192,
+        "chunk", 1024,
         "the size of chunks for evaluation inferences, set to the value that"
         "fits your GPU/TPU memory.")
 
@@ -264,7 +264,7 @@ def render_image(render_fn, rays, rng, normalize_disp, chunk=8192):
         start, stop = host_id * rays_per_host, (host_id + 1) * rays_per_host
         chunk_rays = namedtuple_map(lambda r: shard(r[start:stop]), chunk_rays)
         chunk_results = render_fn(key_0, key_1, chunk_rays)[-1]
-        results.append([unshard(x[0], padding) for x in chunk_results])
+        results.append([unshard(x, padding) for x in chunk_results])
         # pylint: enable=cell-var-from-loop
     rgb, disp, acc = [jnp.concatenate(r, axis=0) for r in zip(*results)]
     # Normalize disp for visualization for ndc_rays in llff front-facing scenes.

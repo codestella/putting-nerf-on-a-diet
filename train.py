@@ -176,6 +176,12 @@ def main(unused_argv):
         axis_name="batch",
         in_axes=(0, 0, 0, None, None, None),
         donate_argnums=(2,))
+    
+    semantic_pstep = jax.pmap(
+        functools.partial(clip_utils.semantic_step, model, clip_model),
+        axis_name="batch",
+        in_axes=(0, 0, 0, None, None, None),
+        donate_argnums=(2,))
 
     update_pstep = jax.pmap(
         functools.partial(update_step,),
@@ -185,15 +191,23 @@ def main(unused_argv):
 
 
     def render_fn(variables, key_0, key_1, rays):
-        return jax.lax.all_gather(
-            model.apply(variables, key_0, key_1, rays, FLAGS.randomized),
-            axis_name="batch")
+        return model.apply(variables, key_0, key_1, rays, FLAGS.randomized)
 
     render_pfn = jax.pmap(
         render_fn,
         in_axes=(None, None, None, 0),  # Only distribute the data input.
         donate_argnums=(3,),
         axis_name="batch")
+
+    def render_fn_(variables, key_0, key_1, rays):
+        return model.apply(variables, key_0, key_1, rays, False)
+
+    render_pfn_ = jax.pmap(
+        render_fn_,
+        in_axes=(None, None, None, 0),  # Only distribute the data input.
+        donate_argnums=(3,),
+        axis_name="batch")
+
 
     # Compiling to the CPU because it's faster and more accurate.
     ssim_fn = jax.jit(
@@ -228,13 +242,9 @@ def main(unused_argv):
         lr = learning_rate_fn(step)
 
         if step%FLAGS.sc_loss_every == 0 and FLAGS.use_semantic_loss:
-            # remove dimension for device coz its only run in host core
             sc_batch = dataset.get_clip_data()
-            sc_loss, sc_grad, sc_image = clip_utils.update_semantic_loss(model, clip_model,
-                                                               keys[0], state, sc_batch, lr, FLAGS.sc_loss_mult)
-            sc_grad = flax.jax_utils.replicate(sc_grad)
-            sc_grad = jax.tree_map( lambda x: x[0], sc_grad)
-        
+            sc_loss, sc_grad, sc_image = clip_utils.semantic_step(render_pfn_, clip_model,
+                                                               keys[0], state, sc_batch, lr)
         else:
             sc_loss = 0.
             

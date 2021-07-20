@@ -256,15 +256,15 @@ class Blender(Dataset):
         cams = []
 
         frames = np.arange(len(meta["frames"]))
-        # occlusion train images:
-        # LEGO SCENE: [2,5,10,40,52,53,69,78,83,85,90,94,96,97]
-        # SHIP SCENE: [12, 28, 32, 33, 35, 36, 38, 44, 55, 66, 67, 88, 95, 96]
         if few_shot > 0 and split == 'train':
-            # np.random.seed(0)
-            # np.random.shuffle(frames)
-            # frames = frames[:few_shot]
-            frames = [12, 28, 32, 33, 35, 36, 38, 44, 55, 66, 67, 88, 95, 96]
+            np.random.seed(0)
+            np.random.shuffle(frames)
+            frames = frames[:few_shot]
 
+        # for occluded lego
+        # if split == 'train':
+        #     frames = [2,5,10,40,52,53,69,78,83,85,90,94,96,97]
+        
         for i in frames:
             frame = meta["frames"][i]
             fname = os.path.join(data_dir, frame["file_path"] + ".png")
@@ -306,7 +306,7 @@ class Blender(Dataset):
         src_seed = int(np.random.randint(0, self.max_steps, ()))
         src_rng = jax.random.PRNGKey(src_seed)
         src_camtoworld = np.array(clip_utils.random_pose(src_rng, (self.near, self.far)))
-        random_rays = self.camtoworld_matrix_to_rays(src_camtoworld, downsample = 14)
+        random_rays = self.camtoworld_matrix_to_rays(src_camtoworld, downsample = 16)
         random_rays = utils.Rays(origins=np.reshape(random_rays[0], [-1,3]), directions=np.reshape(random_rays[1], [-1,3]), viewdirs=np.reshape(random_rays[2], [-1,3]))
         batch_dict["random_rays"] = random_rays
         return batch_dict
