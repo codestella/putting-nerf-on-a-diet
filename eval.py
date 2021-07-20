@@ -100,6 +100,18 @@ def main(unused_argv):
     ssim_fn = jax.jit(
         functools.partial(utils.compute_ssim, max_val=1.), backend="cpu")
 
+    last_step = 0
+    out_dir = path.join(FLAGS.train_dir, "path_renders" if FLAGS.render_path else "test_preds")
+    os.makedirs(out_dir, exist_ok=True)
+    if FLAGS.save_output:
+        print(f'eval output will be saved: {out_dir}')
+    else:
+        print(f'eval output will not be saved')
+
+    if not FLAGS.eval_once:
+        summary_writer = tensorboard.SummaryWriter(
+            path.join(FLAGS.train_dir, "eval"))
+
     def generate_spinning_gif(radius, phi, gif_fn, frame_n):
         _rng = random.PRNGKey(0)
         partial_render_fn = functools.partial(render_pfn, state.optimizer.target)
@@ -117,19 +129,6 @@ def main(unused_argv):
                            duration=100, loop=0)
         return gif_images
 
-    is_gif_written = False
-    last_step = 0
-    out_dir = path.join(FLAGS.train_dir, "path_renders" if FLAGS.render_path else "test_preds")
-    os.makedirs(out_dir, exist_ok=True)
-    if FLAGS.save_output:
-        print(f'eval output will be saved: {out_dir}')
-    else:
-        print(f'eval output will not be saved')
-
-    if not FLAGS.eval_once:
-        summary_writer = tensorboard.SummaryWriter(
-            path.join(FLAGS.train_dir, "eval"))
-
     if FLAGS.generate_gif_only:
         print('generate GIF file only')
         _radius = 4.
@@ -140,7 +139,7 @@ def main(unused_argv):
     else:
         print('generate GIF file AND evaluate model performance')
 
-
+    is_gif_written = False
     while True:
         state = checkpoints.restore_checkpoint(FLAGS.train_dir, state)
         step = int(state.optimizer.state.step)
