@@ -119,12 +119,17 @@ def main(unused_argv):
 
     is_gif_written = False
     last_step = 0
-    out_dir = path.join(FLAGS.train_dir,
-                        "path_renders" if FLAGS.render_path else "test_preds")
+    out_dir = path.join(FLAGS.train_dir, "path_renders" if FLAGS.render_path else "test_preds")
     os.makedirs(out_dir, exist_ok=True)
+    if FLAGS.save_output:
+        print(f'eval output will be saved: {out_dir}')
+    else:
+        print(f'eval output will not be saved')
+
     if not FLAGS.eval_once:
         summary_writer = tensorboard.SummaryWriter(
             path.join(FLAGS.train_dir, "eval"))
+
     while True:
         state = checkpoints.restore_checkpoint(FLAGS.train_dir, state)
         step = int(state.optimizer.state.step)
