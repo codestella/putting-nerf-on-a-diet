@@ -307,7 +307,7 @@ class Blender(Dataset):
         src_seed = int(time.time())
         src_rng = jax.random.PRNGKey(src_seed)
         src_camtoworld = np.array(clip_utils.random_pose(src_rng, (self.near, self.far)))
-        random_rays = self.camtoworld_matrix_to_rays(src_camtoworld, downsample = 8)
+        random_rays = self.camtoworld_matrix_to_rays(src_camtoworld, downsample = 14)
         w = random_rays[0].shape[0] - random_rays[0].shape[0]%jax.local_device_count()
         random_rays = jax.tree_map(lambda x: x[:w,:w].reshape(-1,3), random_rays)
         batch_dict["random_rays"] = random_rays
