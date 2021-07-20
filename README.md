@@ -1,5 +1,4 @@
 # Putting NeRF on a Diet: Semantically Consistent Few-Shot View Synthesis Implementation
-
 ###** WARNING : it is not the completed REAME (Until Thursday)**
 <p align="center"><img width="450" alt="스크린샷 2021-07-04 오후 4 11 51" src="https://user-images.githubusercontent.com/77657524/126361638-4aad58e8-4efb-4fc5-bf78-f53d03799e1e.png"></p>
 
@@ -97,7 +96,7 @@ You can toggle the semantic loss by “use_semantic_loss” in configuration fil
 
 ## 💎 Performance
 
-### Performance Tables
+### ❗️ Performance Tables
 #### 4 Shot Blender Dataset PSNR Result
 
 | Scene   |   Chair   |   Drums   |   Ficus   |   Hotdog  |    Lego   | Materials |    Mic    |    Ship   |    Mean   |
@@ -111,7 +110,7 @@ You can toggle the semantic loss by “use_semantic_loss” in configuration fil
 </p>
 
 
-### - Rendering GIF images by 8-shot learned Diet-NeRF
+### ❗ Rendering GIF images by 8-shot learned Diet-NeRF
 
 DietNeRF has a strong capacity to generalise on novel and challenging views with EXTREMELY SMALL TRAINING SAMPLES!  
 The animations below shows the performance difference between DietNeRF (left) v.s. NeRF (right) with only 4 training images: 
@@ -126,7 +125,7 @@ The animations below shows the performance difference between DietNeRF (left) v.
 ![Text](./assets/ship-dietnerf.gif) ![Alt Text](./assets/ship-nerf.gif)
 
 
-### - Rendered Rendering images by 4-shot learned Diet-NeRF vs Vanilla-NeRF
+### ❗ Rendered Rendering images by 4-shot learned Diet-NeRF vs Vanilla-NeRF
 
 #### SHIP
 @ will be filled
@@ -137,7 +136,7 @@ The animations below shows the performance difference between DietNeRF (left) v.
 #### HOTDOG
 @ will be filled
 
-### - Rendered examples by occluded 14-shot learned NeRF and Diet-NeRF
+### ❗ Rendered examples by occluded 14-shot learned NeRF and Diet-NeRF
 This result is on the quite initial state and expected to be improved.
 
 #### Training poses
