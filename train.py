@@ -149,7 +149,8 @@ def main(unused_argv):
     if FLAGS.use_semantic_loss:
         clip_model = clip_utils.init_CLIP(FLAGS.clip_output_dtype,
                                           FLAGS.clip_model_name)
-        print('semantic loss ACTIVATED, CLIP is set up')
+        print(f'semantic loss ACTIVATED, CLIP is set up '
+              f'(sc_loss_mult: {FLAGS.sc_loss_mult})')
     else:
         clip_model = None
         print('semantic loss DEACTIVATED, CLIP is set to None')
