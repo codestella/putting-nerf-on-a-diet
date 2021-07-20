@@ -81,6 +81,7 @@ def main(unused_argv):
     optimizer = flax.optim.Adam(FLAGS.lr_init).create(init_variables)
     state = utils.TrainState(optimizer=optimizer)
     del optimizer, init_variables
+    state = checkpoints.restore_checkpoint(FLAGS.train_dir, state)
 
     # Rendering is forced to be deterministic even if training was randomized, as
     # this eliminates "speckle" artifacts.
@@ -142,7 +143,6 @@ def main(unused_argv):
 
     is_gif_written = False
     while True:
-        state = checkpoints.restore_checkpoint(FLAGS.train_dir, state)
         step = int(state.optimizer.state.step)
         if step <= last_step:
             continue
