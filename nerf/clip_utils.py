@@ -15,38 +15,36 @@ FLAGS = flags.FLAGS
 
 @partial(jax.jit, static_argnums=[0])
 def semantic_loss(clip_model, src_image, target_embedding): 
-    src_image = src_image.astype(jnp.float16)
-    target_embedding = target_embedding.astype(jnp.float16)
+    src_image = utils.unshard(src_image)
+    w = int(math.sqrt(src_image.size//3))
+    src_image = src_image.reshape([w, w, 3])
+ 
     src_embedding = clip_model.get_image_features(pixel_values=preprocess_for_CLIP(jnp.expand_dims(src_image,0).transpose(0, 3, 1, 2)))
     src_embedding /= jnp.linalg.norm(src_embedding, axis=-1, keepdims=True)
     src_embedding = jnp.array(src_embedding)
     sc_loss = 0.5 * jnp.sum((src_embedding - target_embedding) ** 2) / src_embedding.shape[0]
-    return sc_loss
+    return sc_loss, src_image
 
 def semantic_step_multi(render_pfn, clip_model, rng, state, batch, lr):
-    random_rays = jax.tree_map(lambda x: utils.shard(x), batch["random_rays"])
+    random_rays = jax.tree_map(lambda x: utils.shard(x).astype(jnp.float16), batch["random_rays"])
+    target_embedding = batch["embedding"].astype(jnp.float16)
     rng, key_0, key_1 = random.split(rng,3)
 
     def loss_fn(variables):
-        src_image = render_pfn(variables, key_0, key_1, random_rays)[-1][0]
-        src_image = utils.unshard(src_image)
-        w = int(math.sqrt(src_image.size//3))
-        src_image = src_image.reshape([w, w, 3])
-        sc_loss = semantic_loss(clip_model, src_image, batch["embedding"]) 
+        src_image = render_pfn(variables, key_0, key_1, random_rays)
+        sc_loss, src_image = semantic_loss(clip_model, src_image, target_embedding)
         return sc_loss * FLAGS.sc_loss_mult, src_image
-    (sc_loss, src_image), grad = jax.value_and_grad(loss_fn, has_aux = True)(jax.device_get(jax.tree_map(lambda x:x[0], state)).optimizer.target)
+    (sc_loss, src_image), grad = jax.value_and_grad(loss_fn, has_aux = True)(jax.device_get(jax.tree_map(lambda x:x[0].astype(jnp.float16), state)).optimizer.target)
     return sc_loss, grad, src_image
 
 @partial(jax.jit, static_argnums=[0, 1])
 def semantic_step_single(model, clip_model, rng, state, batch, lr):
     # the batch is without shard
     random_rays = batch["random_rays"]
-    #rng, key_0, key_1 = rng
     rng, key_0, key_1 = random.split(rng,3)
 
     def semantic_loss(variables):
-        src_ret = model.apply(variables, key_0, key_1, random_rays, False)
-        src_image = src_ret[-1][0]
+        src_image = model.apply(variables, key_0, key_1, random_rays, False, rgb_only = True)
         # reshape flat pixel to an image (assume 3 channels & square shape)
         w = int(math.sqrt(src_image.shape[0]))
         src_image = src_image.reshape([w, w, 3])

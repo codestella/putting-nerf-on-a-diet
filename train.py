@@ -149,7 +149,8 @@ def main(unused_argv):
     if FLAGS.use_semantic_loss:
         clip_model = clip_utils.init_CLIP(FLAGS.clip_output_dtype,
                                           FLAGS.clip_model_name)
-        print('semantic loss ACTIVATED, CLIP is set up')
+        print(f'semantic loss ACTIVATED, CLIP is set up '
+              f'(sc_loss_mult: {FLAGS.sc_loss_mult})')
     else:
         clip_model = None
         print('semantic loss DEACTIVATED, CLIP is set to None')
@@ -177,19 +178,11 @@ def main(unused_argv):
         in_axes=(0, 0, 0, None, None, None),
         donate_argnums=(2,))
     
-    if jax.local_device_count() > 1 and FLAGS.use_semantic_loss:
-        semantic_pstep = jax.pmap(
-            functools.partial(clip_utils.semantic_step_multi, model, clip_model),
-            axis_name="batch",
-            in_axes=(0, 0, 0, None, None, None),
-            donate_argnums=(2,))
-
     update_pstep = jax.pmap(
         functools.partial(update_step,),
         axis_name="batch",
         in_axes=(0, None, None),
         donate_argnums=(0,))
-
 
     def render_fn(variables, key_0, key_1, rays):
         return model.apply(variables, key_0, key_1, rays, FLAGS.randomized)
@@ -201,14 +194,13 @@ def main(unused_argv):
         axis_name="batch")
 
     def render_fn_(variables, key_0, key_1, rays):
-        return model.apply(variables, key_0, key_1, rays, False)
+        return model.apply(variables, key_0, key_1, rays, False, True)
 
     render_pfn_ = jax.pmap(
         render_fn_,
         in_axes=(None, None, None, 0),  # Only distribute the data input.
         donate_argnums=(3,),
         axis_name="batch")
-
 
     # Compiling to the CPU because it's faster and more accurate.
     ssim_fn = jax.jit(
@@ -246,14 +238,12 @@ def main(unused_argv):
         if step%FLAGS.sc_loss_every == 0 and FLAGS.use_semantic_loss:
             sc_batch = dataset.get_clip_data()
             if jax.local_device_count() > 1:
-                sc_loss, sc_grad, sc_image = clip_utils.semantic_step_multi(render_pfn_, clip_model,
-                                                                keys[0], state, sc_batch, lr)
+                sc_loss, sc_grad, sc_image = clip_utils.semantic_step_multi(render_pfn_, clip_model, keys[0], state, sc_batch, lr)
             else:
-                sc_loss, sc_grad, sc_image = clip_utils.semantic_step_single(model, clip_model,
-                                                               keys[0], state, sc_batch, lr)
+                sc_loss, sc_grad, sc_image = clip_utils.semantic_step_single(model, clip_model, keys[0], state, sc_batch, lr)
                 sc_grad = jax.tree_map( lambda x: x[0], sc_grad)
             
-        state, stats, keys = train_pstep(keys, state, batch, lr, step, FLAGS.sc_loss_every)#, grad)
+        state, stats, keys = train_pstep(keys, state, batch, lr, step, FLAGS.sc_loss_every)
         
         if step%FLAGS.sc_loss_every == 0 and FLAGS.use_semantic_loss:
             state = update_pstep(state, sc_grad, lr)

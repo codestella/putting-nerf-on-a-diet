@@ -17,7 +17,7 @@
 """Different datasets implementation plus a general port for all the datasets."""
 INTERNAL = False  # pylint: disable=g-statement-before-imports
 import json
-import os
+import os, time
 from os import path
 import queue
 import threading
@@ -261,7 +261,6 @@ class Blender(Dataset):
             np.random.shuffle(frames)
             frames = frames[:few_shot]
 
-        # for occluded lego
         # if split == 'train':
         #     frames = [2,5,10,40,52,53,69,78,83,85,90,94,96,97]
         
@@ -284,7 +283,7 @@ class Blender(Dataset):
             cams.append(np.array(frame["transform_matrix"], dtype=np.float32))
             images.append(image)
 
-        print(f'No. of training samples: {len(frames)}')
+        print(f'No. of samples: {len(frames)}')
         return cams, images, meta
 
     def _next_train(self):
@@ -305,11 +304,12 @@ class Blender(Dataset):
         batch_dict = {}
         batch_dict["embedding"] = self.embeddings[image_index]
 
-        src_seed = int(np.random.randint(0, self.max_steps, ()))
+        src_seed = int(time.time())
         src_rng = jax.random.PRNGKey(src_seed)
         src_camtoworld = np.array(clip_utils.random_pose(src_rng, (self.near, self.far)))
-        random_rays = self.camtoworld_matrix_to_rays(src_camtoworld, downsample = 16)
-        random_rays = utils.Rays(origins=np.reshape(random_rays[0], [-1,3]), directions=np.reshape(random_rays[1], [-1,3]), viewdirs=np.reshape(random_rays[2], [-1,3]))
+        random_rays = self.camtoworld_matrix_to_rays(src_camtoworld, downsample = 8)
+        w = random_rays[0].shape[0] - random_rays[0].shape[0]%jax.local_device_count()
+        random_rays = jax.tree_map(lambda x: x[:w,:w].reshape(-1,3), random_rays)
         batch_dict["random_rays"] = random_rays
         return batch_dict
 
