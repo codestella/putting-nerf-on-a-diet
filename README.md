@@ -9,6 +9,20 @@ Which is based on extracting the semantic information using a pre-trained visual
 Our Project is started in the HuggingFace X GoogleAI (JAX) Community Week Event.
 https://discuss.huggingface.co/t/open-to-the-community-community-week-using-jax-flax-for-nlp-cv/7104
 
+## DietNeRF v.s. NeRF 
+DietNeRF has a strong capacity to generalise on novel and challenging views with EXTREMELY SMALL TRAINING SAMPLES!  
+The animations below shows the performance difference between DietNeRF (left) v.s. NeRF (right) with only 4 training images: 
+
+#### SHIP
+![Text](./assets/ship-dietnerf.gif) ![Alt Text](./assets/ship-nerf.gif)
+
+#### LEGO
+![Text](./assets/ship-dietnerf.gif) ![Alt Text](./assets/ship-nerf.gif)
+
+#### HOTDOG
+![Text](./assets/ship-dietnerf.gif) ![Alt Text](./assets/ship-nerf.gif)
+
+
 ##  Hugging Face Hub Repo URL: 
 
 We will also upload our project on the Hugging Face Hub Repository. 
