@@ -271,10 +271,10 @@ def render_image(render_fn, rays, rng, normalize_disp, chunk=8192):
         #     results.append([unshard(x, padding) for x in chunk_results])
         # else:
         #     results.append([unshard(x[0], padding) for x in chunk_results])
-        if len(chunk_results[0].shape) == 3:
-            results.append([unshard(x[0], padding) for x in chunk_results])
-        else:
-            results.append([unshard(x, padding) for x in chunk_results])
+        # if len(chunk_results[0].shape) == 3:
+        #     results.append([unshard(x[0], padding) for x in chunk_results])
+        # else:
+        results.append([unshard(x, padding) for x in chunk_results])
 
         # pylint: enable=cell-var-from-loop
     rgb, disp, acc = [jnp.concatenate(r, axis=0) for r in zip(*results)]
