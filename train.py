@@ -236,6 +236,7 @@ def main(unused_argv):
 
     # for semantic loss update
     sc_image = None
+    sc_loss = 0.
     for step, batch in tqdm(zip(range(init_step, FLAGS.max_steps + 1), pdataset)):
         if reset_timer:
             t_loop_start = time.time()
@@ -251,8 +252,6 @@ def main(unused_argv):
                 sc_loss, sc_grad, sc_image = clip_utils.semantic_step_single(model, clip_model,
                                                                keys[0], state, sc_batch, lr)
                 sc_grad = jax.tree_map( lambda x: x[0], sc_grad)
-        else:
-            sc_loss = 0.
             
         state, stats, keys = train_pstep(keys, state, batch, lr, step, FLAGS.sc_loss_every)#, grad)
         
