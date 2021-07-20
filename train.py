@@ -176,21 +176,27 @@ def main(unused_argv):
         axis_name="batch",
         in_axes=(0, 0, 0, None, None, None),
         donate_argnums=(2,))
-
+    
     update_pstep = jax.pmap(
         functools.partial(update_step,),
         axis_name="batch",
         in_axes=(0, None, None),
         donate_argnums=(0,))
 
-
     def render_fn(variables, key_0, key_1, rays):
-        return jax.lax.all_gather(
-            model.apply(variables, key_0, key_1, rays, FLAGS.randomized),
-            axis_name="batch")
+        return model.apply(variables, key_0, key_1, rays, FLAGS.randomized)
 
     render_pfn = jax.pmap(
         render_fn,
+        in_axes=(None, None, None, 0),  # Only distribute the data input.
+        donate_argnums=(3,),
+        axis_name="batch")
+
+    def render_fn_(variables, key_0, key_1, rays):
+        return model.apply(variables, key_0, key_1, rays, False, True)
+
+    render_pfn_ = jax.pmap(
+        render_fn_,
         in_axes=(None, None, None, 0),  # Only distribute the data input.
         donate_argnums=(3,),
         axis_name="batch")
@@ -221,6 +227,7 @@ def main(unused_argv):
 
     # for semantic loss update
     sc_image = None
+    sc_loss = 0.
     for step, batch in tqdm(zip(range(init_step, FLAGS.max_steps + 1), pdataset)):
         if reset_timer:
             t_loop_start = time.time()
@@ -228,17 +235,14 @@ def main(unused_argv):
         lr = learning_rate_fn(step)
 
         if step%FLAGS.sc_loss_every == 0 and FLAGS.use_semantic_loss:
-            # remove dimension for device coz its only run in host core
             sc_batch = dataset.get_clip_data()
-            sc_loss, sc_grad, sc_image = clip_utils.update_semantic_loss(model, clip_model,
-                                                               keys[0], state, sc_batch, lr, FLAGS.sc_loss_mult)
-            sc_grad = flax.jax_utils.replicate(sc_grad)
-            sc_grad = jax.tree_map( lambda x: x[0], sc_grad)
-        
-        else:
-            sc_loss = 0.
+            if jax.local_device_count() > 1:
+                sc_loss, sc_grad, sc_image = clip_utils.semantic_step_multi(render_pfn_, clip_model, keys[0], state, sc_batch, lr)
+            else:
+                sc_loss, sc_grad, sc_image = clip_utils.semantic_step_single(model, clip_model, keys[0], state, sc_batch, lr)
+                sc_grad = jax.tree_map( lambda x: x[0], sc_grad)
             
-        state, stats, keys = train_pstep(keys, state, batch, lr, step, FLAGS.sc_loss_every)#, grad)
+        state, stats, keys = train_pstep(keys, state, batch, lr, step, FLAGS.sc_loss_every)
         
         if step%FLAGS.sc_loss_every == 0 and FLAGS.use_semantic_loss:
             state = update_pstep(state, sc_grad, lr)
@@ -254,6 +258,7 @@ def main(unused_argv):
         if jax.host_id() == 0:
             if step % FLAGS.print_every == 0:
                 summary_writer.scalar("train_loss", stats.loss[0], step)
+                summary_writer.scalar("sc_loss", sc_loss, step)
                 summary_writer.scalar("train_psnr", stats.psnr[0], step)
                 summary_writer.scalar("train_loss_coarse", stats.loss_c[0], step)
                 summary_writer.scalar("train_psnr_coarse", stats.psnr_c[0], step)
