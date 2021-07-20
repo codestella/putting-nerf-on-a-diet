@@ -136,6 +136,7 @@ def main(unused_argv):
         _gif_fn = os.path.join(out_dir, 'spinning.gif')
         generate_spinning_gif(_radius, _phi, _gif_fn, frame_n=30)
         print(f'GIF file for spinning views written: {_gif_fn}')
+        return
     else:
         print('generate GIF file AND evaluate model performance')
 
