@@ -15,8 +15,11 @@
 
 # Lint as: python3
 """Evaluation script for Nerf."""
-import functools
+import math
+import glob
+import os
 from os import path
+import functools
 
 from absl import app
 from absl import flags
@@ -25,23 +28,21 @@ from flax.metrics import tensorboard
 from flax.training import checkpoints
 import jax
 from jax import random
-import numpy as np
 import tensorflow as tf
-import tensorflow_hub as tf_hub
-#import wandb
-import glob
-import cv2
-import os
 
-from jaxnerf.nerf import datasets
-from jaxnerf.nerf import models
-from jaxnerf.nerf import utils
+from tqdm import tqdm
+import cv2
+import numpy as np
+from PIL import Image
+
+from nerf import datasets
+from nerf import models
+from nerf import utils
+from nerf import clip_utils
 
 FLAGS = flags.FLAGS
-
 utils.define_flags()
 
-#LPIPS_TFHUB_PATH = "@neural-rendering/lpips/distance/1"
 
 
 def compute_lpips(image1, image2, model):
@@ -50,6 +51,11 @@ def compute_lpips(image1, image2, model):
     return model(
         tf.convert_to_tensor(image1[None, Ellipsis]),
         tf.convert_to_tensor(image2[None, Ellipsis]))[0]
+
+
+def predict_to_image(pred_out):
+    image_arr = np.array(np.clip(pred_out, 0., 1.) * 255.).astype(np.uint8)
+    return Image.fromarray(image_arr)
 
 
 def main(unused_argv):
@@ -75,8 +81,7 @@ def main(unused_argv):
     optimizer = flax.optim.Adam(FLAGS.lr_init).create(init_variables)
     state = utils.TrainState(optimizer=optimizer)
     del optimizer, init_variables
-
-    #lpips_model = tf_hub.load(LPIPS_TFHUB_PATH)
+    state = checkpoints.restore_checkpoint(FLAGS.train_dir, state)
 
     # Rendering is forced to be deterministic even if training was randomized, as
     # this eliminates "speckle" artifacts.
@@ -97,13 +102,47 @@ def main(unused_argv):
         functools.partial(utils.compute_ssim, max_val=1.), backend="cpu")
 
     last_step = 0
-    out_dir = path.join(FLAGS.train_dir,
-                        "path_renders" if FLAGS.render_path else "test_preds")
+    out_dir = path.join(FLAGS.train_dir, "path_renders" if FLAGS.render_path else "test_preds")
+    os.makedirs(out_dir, exist_ok=True)
+    if FLAGS.save_output:
+        print(f'eval output will be saved: {out_dir}')
+    else:
+        print(f'eval output will not be saved')
+
     if not FLAGS.eval_once:
         summary_writer = tensorboard.SummaryWriter(
             path.join(FLAGS.train_dir, "eval"))
+
+    def generate_spinning_gif(radius, phi, gif_fn, frame_n):
+        _rng = random.PRNGKey(0)
+        partial_render_fn = functools.partial(render_pfn, state.optimizer.target)
+        gif_images = []
+        for theta in tqdm(np.linspace(-math.pi, math.pi, frame_n)):
+            camtoworld = np.array(clip_utils.pose_spherical(radius, theta, phi))
+            rays = dataset.camtoworld_matrix_to_rays(camtoworld, downsample=4)
+            _rng, key0, key1 = random.split(_rng, 3)
+            color, _, _ = utils.render_image(partial_render_fn, rays,
+                                             _rng, False, chunk=4096)
+            image = predict_to_image(color)
+            gif_images.append(image)
+        gif_images[0].save(gif_fn, save_all=True,
+                           append_images=gif_images,
+                           duration=100, loop=0)
+        return gif_images
+
+    if FLAGS.generate_gif_only:
+        print('generate GIF file only')
+        _radius = 4.
+        _phi = (30 * math.pi) / 180
+        _gif_fn = os.path.join(out_dir, 'spinning.gif')
+        generate_spinning_gif(_radius, _phi, _gif_fn, frame_n=30)
+        print(f'GIF file for spinning views written: {_gif_fn}')
+        return
+    else:
+        print('generate GIF file AND evaluate model performance')
+
+    is_gif_written = False
     while True:
-        state = checkpoints.restore_checkpoint(FLAGS.train_dir, state)
         step = int(state.optimizer.state.step)
         if step <= last_step:
             continue
@@ -152,6 +191,7 @@ def main(unused_argv):
                 summary_writer.scalar("ssim", np.mean(np.array(ssim_values)), step)
                 #summary_writer.scalar("lpips", np.mean(np.array(lpips_values)), step)
                 summary_writer.image("target", showcase_gt, step)
+
         if FLAGS.save_output and (not FLAGS.render_path) and (jax.host_id() == 0):
             with utils.open_file(path.join(out_dir, f"psnrs_{step}.txt"), "w") as f:
                 f.write(" ".join([str(v) for v in psnr_values]))
@@ -165,27 +205,32 @@ def main(unused_argv):
                 f.write("{}".format(np.mean(np.array(ssim_values))))
             #with utils.open_file(path.join(out_dir, "lpips.txt"), "w") as f:
                 #f.write("{}".format(np.mean(np.array(lpips_values))))
-            import glob
-            import cv2
-            import numpy as np
+            print(f'performance metrics written as txt files: {out_dir}')
 
-            out_dir = '/content/gdrive/My Drive/Colab_codes/nerf_with_clip/test1/test_preds'
             imglist = glob.glob(os.path.join(out_dir, "[0-9][0-9][0-9].png"))
             sorted_files = sorted(imglist, key=lambda x: int(x.split('/')[-1].split('.')[0]))
-            # imglist2 = glob.glob(os.path.join(out_dir, "disp_[0-9][0-9][0-9].png"))
-            # sorted_files2 = sorted(imglist2, key=lambda x: int(x.split('/')[-1].split('.')[0].split('_')[-1]))
             fourcc = cv2.VideoWriter_fourcc(*'MP4V')
             fps = 10.0
             img = cv2.imread(sorted_files[0], cv2.IMREAD_COLOR)
-            out = cv2.VideoWriter(os.path.join(out_dir, "rendering_video.mp4"), fourcc, fps,
+            video_fn = os.path.join(out_dir, "rendering_video.mp4")
+            out = cv2.VideoWriter(video_fn, fourcc, fps,
                                   (img.shape[1], img.shape[0]))
 
             for i in range(len(sorted_files)):
                 img = cv2.imread(sorted_files[i], cv2.IMREAD_COLOR)
-                # img2 = cv2.imread(imglist2[i], cv2.IMREAD_COLOR)
-                # catimg = np.concatenate((img, img2), axis=1)
                 out.write(img)
             out.release()
+            print(f'video file written: {video_fn}')
+
+            # write gif file for spinning views of a scene
+            if not is_gif_written:
+                _radius = 4.
+                _phi = (30 * math.pi) / 180
+                _gif_fn = os.path.join(out_dir, 'spinning.gif')
+                generate_spinning_gif(_radius, _phi, _gif_fn, frame_n=30)
+                print(f'GIF file for spinning views written: {_gif_fn}')
+                is_gif_written = True
+
         if FLAGS.eval_once:
             break
         if int(step) >= FLAGS.max_steps:

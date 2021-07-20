@@ -303,7 +303,7 @@ class Blender(Dataset):
 
         batch_dict = {}
         batch_dict["embedding"] = self.embeddings[image_index]
-        
+
         src_seed = int(time.time())
         src_rng = jax.random.PRNGKey(src_seed)
         src_camtoworld = np.array(clip_utils.random_pose(src_rng, (self.near, self.far)))
