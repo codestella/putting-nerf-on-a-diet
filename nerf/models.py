@@ -56,7 +56,7 @@ class NerfModel(nn.Module):
     legacy_posenc_order: bool  # Keep the same ordering as the original tf code.
 
     @nn.compact
-    def __call__(self, rng_0, rng_1, rays, randomized):
+    def __call__(self, rng_0, rng_1, rays, randomized, rgb_only = False):
         """Nerf Model.
 
         Args:
@@ -70,6 +70,8 @@ class NerfModel(nn.Module):
         """
         # Stratified sampling along rays
         key, rng_0 = random.split(rng_0)
+        dtype = rays[0].dtype
+
         z_vals, samples = model_utils.sample_along_rays(
             key,
             rays.origins,
@@ -80,6 +82,7 @@ class NerfModel(nn.Module):
             randomized,
             self.lindisp,
         )
+
         samples_enc = model_utils.posenc(
             samples,
             self.min_deg_point,
@@ -128,13 +131,15 @@ class NerfModel(nn.Module):
             rays.directions,
             white_bkgd=self.white_bkgd,
         )
+
         ret = [
             (comp_rgb, disp, acc),
         ]
-        # Hierarchical sampling based on coarse predictions
+
         if self.num_fine_samples > 0:
             z_vals_mid = .5 * (z_vals[..., 1:] + z_vals[..., :-1])
             key, rng_1 = random.split(rng_1)
+
             z_vals, samples = model_utils.sample_pdf(
                 key,
                 z_vals_mid,
@@ -176,6 +181,7 @@ class NerfModel(nn.Module):
             )
             rgb = self.rgb_activation(raw_rgb)
             sigma = self.sigma_activation(raw_sigma)
+            
             comp_rgb, disp, acc, unused_weights = model_utils.volumetric_rendering(
                 rgb,
                 sigma,
@@ -184,8 +190,9 @@ class NerfModel(nn.Module):
                 white_bkgd=self.white_bkgd,
             )
             ret.append((comp_rgb, disp, acc))
+        if rgb_only:
+            return ret[-1][0]
         return ret
-
 
 def construct_nerf(key, example_batch, args):
     """Construct a Neural Radiance Field.

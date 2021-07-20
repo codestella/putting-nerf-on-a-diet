@@ -62,17 +62,19 @@ class MLP(nn.Module):
         dense_layer = functools.partial(
             nn.Dense, kernel_init=jax.nn.initializers.glorot_uniform())
         inputs = x
+
+        dtype = x.dtype
         for i in range(self.net_depth):
-            x = dense_layer(self.net_width)(x)
+            x = dense_layer(self.net_width, dtype = dtype)(x)
             x = self.net_activation(x)
             if i % self.skip_layer == 0 and i > 0:
                 x = jnp.concatenate([x, inputs], axis=-1)
-        raw_sigma = dense_layer(self.num_sigma_channels)(x).reshape(
+        raw_sigma = dense_layer(self.num_sigma_channels, dtype = dtype)(x).reshape(
             [-1, num_samples, self.num_sigma_channels])
 
         if condition is not None:
             # Output of the first part of MLP.
-            bottleneck = dense_layer(self.net_width)(x)
+            bottleneck = dense_layer(self.net_width, dtype = dtype)(x)
             # Broadcast condition from [batch, feature] to
             # [batch, num_samples, feature] since all the samples along the same ray
             # have the same viewdir.
@@ -83,9 +85,9 @@ class MLP(nn.Module):
             x = jnp.concatenate([bottleneck, condition], axis=-1)
             # Here use 1 extra layer to align with the original nerf model.
             for i in range(self.net_depth_condition):
-                x = dense_layer(self.net_width_condition)(x)
+                x = dense_layer(self.net_width_condition, dtype = dtype)(x)
                 x = self.net_activation(x)
-        raw_rgb = dense_layer(self.num_rgb_channels)(x).reshape(
+        raw_rgb = dense_layer(self.num_rgb_channels, dtype = dtype)(x).reshape(
             [-1, num_samples, self.num_rgb_channels])
         return raw_rgb, raw_sigma
 
@@ -115,7 +117,9 @@ def sample_along_rays(key, origins, directions, num_samples, near, far,
     """
     batch_size = origins.shape[0]
 
-    t_vals = jnp.linspace(0., 1., num_samples)
+    dtype = origins.dtype
+
+    t_vals = jnp.linspace(0., 1., num_samples, dtype = dtype)
     if lindisp:
         z_vals = 1. / (1. / near * (1. - t_vals) + 1. / far * t_vals)
     else:
@@ -129,7 +133,7 @@ def sample_along_rays(key, origins, directions, num_samples, near, far,
         z_vals = lower + (upper - lower) * t_rand
     else:
         # Broadcast z_vals to make the returned shape consistent.
-        z_vals = jnp.broadcast_to(z_vals[None, ...], [batch_size, num_samples])
+        z_vals = jnp.broadcast_to(z_vals[None, ...], [batch_size, num_samples]).astype(dtype)
 
     coords = cast_rays(z_vals, origins, directions)
     return z_vals, coords
@@ -153,7 +157,10 @@ def posenc(x, min_deg, max_deg, legacy_posenc_order=False):
     """
     if min_deg == max_deg:
         return x
-    scales = jnp.array([2 ** i for i in range(min_deg, max_deg)])
+
+    dtype = x.dtype
+
+    scales = jnp.array([2 ** i for i in range(min_deg, max_deg)], dtype = dtype)
     if legacy_posenc_order:
         xb = x[..., None, :] * scales[:, None]
         four_feat = jnp.reshape(
@@ -183,10 +190,13 @@ def volumetric_rendering(rgb, sigma, z_vals, dirs, white_bkgd):
         acc: jnp.ndarray(float32), [batch_size].
         weights: jnp.ndarray(float32), [batch_size, num_samples]
     """
-    eps = 1e-10
+    dtype = rgb.dtype
+    
+    eps = jnp.array(1e-10, dtype = dtype)
     dists = jnp.concatenate([
         z_vals[..., 1:] - z_vals[..., :-1],
-        jnp.broadcast_to([1e10], z_vals[..., :1].shape)
+        jnp.broadcast_to(jnp.array([1e10]),#, dtype = dtype), 
+            z_vals[..., :1].shape)
     ], -1)
     dists = dists * jnp.linalg.norm(dirs[..., None, :], axis=-1)
     # Note that we're quietly turning sigma from [..., 0] to [...].
@@ -197,6 +207,7 @@ def volumetric_rendering(rgb, sigma, z_vals, dirs, white_bkgd):
     ],
         axis=-1)
     weights = alpha * accum_prod
+    weights = weights.astype(dtype)
 
     comp_rgb = (weights[..., None] * rgb).sum(axis=-2)
     depth = (weights * z_vals).sum(axis=-1)
@@ -227,6 +238,8 @@ def piecewise_constant_pdf(key, bins, weights, num_samples, randomized):
     """
     # Pad each weight vector (only if necessary) to bring its sum to `eps`. This
     # avoids NaNs when the input is zeros or small, but has no effect otherwise.
+    dtype = bins.dtype
+
     eps = 1e-5
     weight_sum = jnp.sum(weights, axis=-1, keepdims=True)
     padding = jnp.maximum(0, eps - weight_sum)
@@ -238,8 +251,8 @@ def piecewise_constant_pdf(key, bins, weights, num_samples, randomized):
     pdf = weights / weight_sum
     cdf = jnp.minimum(1, jnp.cumsum(pdf[..., :-1], axis=-1))
     cdf = jnp.concatenate([
-        jnp.zeros(list(cdf.shape[:-1]) + [1]), cdf,
-        jnp.ones(list(cdf.shape[:-1]) + [1])
+        jnp.zeros(list(cdf.shape[:-1]) + [1], dtype = dtype), cdf,
+        jnp.ones(list(cdf.shape[:-1]) + [1], dtype = dtype)
     ],
         axis=-1)
 
@@ -249,7 +262,7 @@ def piecewise_constant_pdf(key, bins, weights, num_samples, randomized):
         u = random.uniform(key, list(cdf.shape[:-1]) + [num_samples])
     else:
         # Match the behavior of random.uniform() by spanning [0, 1-eps].
-        u = jnp.linspace(0., 1. - jnp.finfo('float32').eps, num_samples)
+        u = jnp.linspace(0., 1. - jnp.finfo(dtype).eps, num_samples, dtype = dtype)
         u = jnp.broadcast_to(u, list(cdf.shape[:-1]) + [num_samples])
 
     # Identify the location in `cdf` that corresponds to a random sample.
