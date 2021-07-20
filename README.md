@@ -1,5 +1,6 @@
 # Putting NeRF on a Diet: Semantically Consistent Few-Shot View Synthesis Implementation
 
+###** WARNING : it is not the completed REAME (Until Thursday)**
 <p align="center"><img width="450" alt="스크린샷 2021-07-04 오후 4 11 51" src="https://user-images.githubusercontent.com/77657524/126361638-4aad58e8-4efb-4fc5-bf78-f53d03799e1e.png"></p>
 
 the Pytorch, JAX/Flax based code implementation of this paper [Putting NeRF on a Diet : Ajay Jain, Matthew Tancik, Pieter Abbeel, Arxiv : https://arxiv.org/abs/2104.00677] 
