@@ -177,11 +177,12 @@ def main(unused_argv):
         in_axes=(0, 0, 0, None, None, None),
         donate_argnums=(2,))
     
-    semantic_pstep = jax.pmap(
-        functools.partial(clip_utils.semantic_step, model, clip_model),
-        axis_name="batch",
-        in_axes=(0, 0, 0, None, None, None),
-        donate_argnums=(2,))
+    if jax.local_device_count() > 1 and FLAGS.use_semantic_loss:
+        semantic_pstep = jax.pmap(
+            functools.partial(clip_utils.semantic_step_multi, model, clip_model),
+            axis_name="batch",
+            in_axes=(0, 0, 0, None, None, None),
+            donate_argnums=(2,))
 
     update_pstep = jax.pmap(
         functools.partial(update_step,),
@@ -243,8 +244,13 @@ def main(unused_argv):
 
         if step%FLAGS.sc_loss_every == 0 and FLAGS.use_semantic_loss:
             sc_batch = dataset.get_clip_data()
-            sc_loss, sc_grad, sc_image = clip_utils.semantic_step(render_pfn_, clip_model,
+            if jax.local_device_count() > 1:
+                sc_loss, sc_grad, sc_image = clip_utils.semantic_step_multi(render_pfn_, clip_model,
+                                                                keys[0], state, sc_batch, lr)
+            else:
+                sc_loss, sc_grad, sc_image = clip_utils.semantic_step_single(model, clip_model,
                                                                keys[0], state, sc_batch, lr)
+                sc_grad = jax.tree_map( lambda x: x[0], sc_grad)
         else:
             sc_loss = 0.
             
