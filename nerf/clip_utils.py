@@ -60,7 +60,7 @@ def semantic_step_single(model, clip_model, rng, state, batch, lr):
         src_embedding = jnp.array(src_embedding)
         target_embedding = batch["embedding"]
         sc_loss = 0.5 * jnp.sum((src_embedding - target_embedding)**2)
-        return sc_loss * FLAGS.sc_loss_mult, src_image
+        return sc_loss * FLAGS.sc_loss_mult, f_image
     (sc_loss, src_image), grad = jax.value_and_grad(semantic_loss, has_aux = True)(jax.device_get(jax.tree_map(lambda x:x[0], state)).optimizer.target)
     return sc_loss, grad, src_image
 
