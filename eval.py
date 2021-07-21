@@ -86,8 +86,7 @@ def main(unused_argv):
     # Rendering is forced to be deterministic even if training was randomized, as
     # this eliminates "speckle" artifacts.
     def render_fn(variables, key_0, key_1, rays):
-        return jax.lax.all_gather(
-            model.apply(variables, key_0, key_1, rays, False), axis_name="batch")
+        return model.apply(variables, key_0, key_1, rays, False)
 
     # pmap over only the data input.
     render_pfn = jax.pmap(
