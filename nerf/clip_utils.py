@@ -39,6 +39,7 @@ def semantic_step_multi(render_pfn, clip_model, rng, state, batch, lr):
 
 @partial(jax.jit, static_argnums=[0, 1])
 def semantic_step_single(model, clip_model, rng, state, batch, lr):
+    batch = jax.tree_map(lambda x: x.astype(jnp.float16), batch)
     # the batch is without shard
     random_rays = batch["random_rays"]
     rng, key_0, key_1 = random.split(rng,3)

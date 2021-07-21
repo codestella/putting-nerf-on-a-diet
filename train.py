@@ -102,7 +102,6 @@ def train_step(model, clip_model, rng, state, batch, lr, step, K,):
 
     (_, stats), grad = (
         jax.value_and_grad(loss_fn, has_aux=True)(state.optimizer.target))
-    grad = jax.lax.pmean(grad, axis_name="batch")
     stats = jax.lax.pmean(stats, axis_name="batch")
     
     # Clip the gradient by value.
@@ -118,16 +117,13 @@ def train_step(model, clip_model, rng, state, batch, lr, step, K,):
         mult = jnp.minimum(1, FLAGS.grad_max_norm / (1e-7 + grad_norm))
         grad = jax.tree_util.tree_map(lambda z: mult * z, grad)
 
-    #return grad, state, rng
-    new_optimizer = state.optimizer.apply_gradient(grad, learning_rate =lr)
-    new_state = state.replace(optimizer=new_optimizer)
-    return new_state, stats, rng
+    return grad, stats, rng
 
 def update_step(state, grad, lr):
+    grad = jax.lax.pmean(grad, axis_name="batch")
     new_optimizer = state.optimizer.apply_gradient(grad, learning_rate=lr)
     new_state = state.replace(optimizer=new_optimizer)
     return new_state
-
 
 def main(unused_argv):
     #wandb.init(project="hf-flax-clip-nerf", entity="wandb", sync_tensorboard=True)
@@ -181,7 +177,7 @@ def main(unused_argv):
     update_pstep = jax.pmap(
         functools.partial(update_step,),
         axis_name="batch",
-        in_axes=(0, None, None),
+        in_axes=(0, 0, None),
         donate_argnums=(0,))
 
     def render_fn(variables, key_0, key_1, rays):
@@ -235,19 +231,29 @@ def main(unused_argv):
             reset_timer = False
         lr = learning_rate_fn(step)
 
+        grad, stats, keys = train_pstep(keys, state, batch, lr, step, FLAGS.sc_loss_every)
+        
         if step%FLAGS.sc_loss_every == 0 and FLAGS.use_semantic_loss:
             sc_batch = dataset.get_clip_data()
             if jax.local_device_count() > 1:
                 sc_loss, sc_grad, sc_image = clip_utils.semantic_step_multi(render_pfn_, clip_model, keys[0], state, sc_batch, lr)
             else:
                 sc_loss, sc_grad, sc_image = clip_utils.semantic_step_single(model, clip_model, keys[0], state, sc_batch, lr)
-                sc_grad = jax.tree_map( lambda x: x[0], sc_grad)
-            
-        state, stats, keys = train_pstep(keys, state, batch, lr, step, FLAGS.sc_loss_every)
+         
+            if jax.host_id() == 0 and step%FLAGS.print_every:
+                for mlp_k, mlp in grad['params'].items():
+                    for layer_k, layer_g in mlp.items():
+                        summary_writer.scalar("%s/%s/kernel_grad"%(mlp_k, layer_k), jnp.linalg.norm(jnp.mean(layer_g['kernel'],0)), step)
+                for mlp_k, mlp in sc_grad['params'].items():
+                    for layer_k, layer_g in mlp.items():
+                        summary_writer.scalar("%s/%s/kernel_sc_grad"%(mlp_k, layer_k), jnp.linalg.norm(layer_g['kernel']), step)
+  
+            leaves, treedef = jax.tree_flatten(grad)
+            sc_leaves, _ = jax.tree_flatten(sc_grad)
+            grad = treedef.unflatten(g+utils.shard(sc_g) for g, sc_g in zip(leaves, sc_leaves))
         
-        if step%FLAGS.sc_loss_every == 0 and FLAGS.use_semantic_loss:
-            state = update_pstep(state, sc_grad, lr)
-       
+        state = update_pstep(state, grad, lr)
+
         if jax.host_id() == 0:
             stats_trace.append(stats)
         if step % FLAGS.gc_every == 0:
