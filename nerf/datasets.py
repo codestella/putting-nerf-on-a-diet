@@ -241,7 +241,8 @@ class Blender(Dataset):
             embs = []
             for img in self.images:
                 img = np.expand_dims(np.transpose(img,[2,0,1]), 0)
-                embs.append(clip_model.get_image_features(pixel_values = clip_utils.preprocess_for_CLIP(img)))
+                emb = clip_model.get_image_features(pixel_values = clip_utils.preprocess_for_CLIP(img))
+                embs.append( emb/np.linalg.norm(emb) )
             self.embeddings = np.concatenate(embs, 0)
         
             self.image_idx = np.arange(self.images.shape[0])
@@ -261,8 +262,8 @@ class Blender(Dataset):
             np.random.shuffle(frames)
             frames = frames[:few_shot]
 
-        # if split == 'train':
-        #     frames = [2,5,10,40,52,53,69,78,83,85,90,94,96,97]
+        if split == 'train':
+            frames = [2,5,10,40,52,53,69,78,83,85,90,94,96,97]
         
         for i in frames:
             frame = meta["frames"][i]
@@ -307,7 +308,7 @@ class Blender(Dataset):
         src_seed = int(time.time())
         src_rng = jax.random.PRNGKey(src_seed)
         src_camtoworld = np.array(clip_utils.random_pose(src_rng, (self.near, self.far)))
-        random_rays = self.camtoworld_matrix_to_rays(src_camtoworld, downsample = 14)
+        random_rays = self.camtoworld_matrix_to_rays(src_camtoworld, downsample = 11)
         w = random_rays[0].shape[0] - random_rays[0].shape[0]%jax.local_device_count()
         random_rays = jax.tree_map(lambda x: x[:w,:w].reshape(-1,3), random_rays)
         batch_dict["random_rays"] = random_rays
