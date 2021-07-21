@@ -191,7 +191,8 @@ class NerfModel(nn.Module):
             )
             ret.append((comp_rgb, disp, acc))
         if rgb_only:
-            return [ret[0][0], ret[1][0]]
+            # return [ret[0][0], ret[1][0]]
+            return [None, ret[1][0]]
         return ret
 
 def construct_nerf(key, example_batch, args):
