@@ -1,5 +1,5 @@
 # Putting NeRF on a Diet: Semantically Consistent Few-Shot View Synthesis Implementation
-###** WARNING : it is not the completed REAME (Until Thursday)**
+
 <p align="center"><img width="450" alt="스크린샷 2021-07-04 오후 4 11 51" src="https://user-images.githubusercontent.com/77657524/126361638-4aad58e8-4efb-4fc5-bf78-f53d03799e1e.png"></p>
 
 the Pytorch, JAX/Flax based code implementation of this paper [Putting NeRF on a Diet : Ajay Jain, Matthew Tancik, Pieter Abbeel, Arxiv : https://arxiv.org/abs/2104.00677] 
@@ -94,57 +94,38 @@ python -m train \
 ```
 You can toggle the semantic loss by “use_semantic_loss” in configuration files.
 
-## 💎 Performance
-
-### ❗️ Performance Tables
-#### 4 Shot Blender Dataset PSNR Result
-
-| Scene   |   Chair   |   Drums   |   Ficus   |   Hotdog  |    Lego   | Materials |    Mic    |    Ship   |    Mean   |
-|---------|:---------:|:---------:|:---------:|:---------:|:---------:|:---------:|:---------:|:---------:|:---------:|
-| NeRF |   33.00   |   25.01   |   30.13   |   36.18   |   32.54   |   29.62   |   32.91   |   28.65   |   31.01   |
-| DietNeRF | **34.08** | **25.03** | **30.43** | **36.92** | **33.28** | **29.91** | **34.53** | **29.36** | **31.69** |
-
-#### Loss Graph Comparison btw NeRF vs DietNeRF in Drum Scene
-
-<p align="center"><img width="400" alt="스크린샷 2021-07-04 오후 4 11 51" src="https://user-images.githubusercontent.com/77657524/126384510-423b9070-a3e5-4e18-8b4e-30c15c5b39c6.png">
-</p>
+## 💎 Expriment Result
 
 
-### ❗ Rendering GIF images by 8-shot learned Diet-NeRF
+### ❗ Rendered Rendering images by 8-shot learned Diet-NeRF (200000 iter)
+### CHAIR / HOTDOG / DRUM
+
+<p align="center">
+  <table>
+    <tr>
+      <td><img alt="" src="./assets/chair.png" width="300"/></td><td><img alt="" src="./assets/hotdog.png" width="300"/></td><td><img alt="" src="./assets/drum.png" width="300"/></td>
+    <tr>
+</table></p>
+
+### ❗ Rendering GIF images by 4-shot learned Diet-NeRF and Diet-NeRF (50000 iter)
 
 DietNeRF has a strong capacity to generalise on novel and challenging views with EXTREMELY SMALL TRAINING SAMPLES!  
 The animations below shows the performance difference between DietNeRF (left) v.s. NeRF (right) with only 4 training images: 
 
-#### SHIP
-![Text](./assets/ship-dietnerf.gif) ![Alt Text](./assets/ship-nerf.gif)
-
-#### LEGO
-![Text](./assets/ship-dietnerf.gif) ![Alt Text](./assets/ship-nerf.gif)
-
-#### HOTDOG
-![Text](./assets/ship-dietnerf.gif) ![Alt Text](./assets/ship-nerf.gif)
 
 
-### ❗ Rendered Rendering images by 4-shot learned Diet-NeRF vs Vanilla-NeRF
+### ❗ Rendered GIF by occluded 14-shot learned NeRF and Diet-NeRF (100000 iter)
+We made aritificial occulusion on the right side of image. 
+The reconstruction quality can be compared with this experiment.
+Diet NeRF shows better quailty than Original NeRF when It is occulused.
 
 #### SHIP
-@ will be filled
-
-#### LEGO
-@ will be filled
-
-#### HOTDOG
-@ will be filled
-
-### ❗ Rendered examples by occluded 14-shot learned NeRF and Diet-NeRF
-This result is on the quite initial state and expected to be improved.
-
-#### Training poses
-<img width="1400" src="https://user-images.githubusercontent.com/26036843/126111980-4f332c87-a7f0-42e0-a355-8e77621bbca4.png">
-
-#### Rendered novel poses
-<img width="800" src="https://user-images.githubusercontent.com/26036843/126113080-a6a48f3d-2629-4efc-a740-fe908ca6b5c3.png">
-
+<p align="center">
+  <table>
+    <tr>
+      <td><img alt="" src="./assets/ship-dietnerf.gif" width="300"/></td><td><img alt="" src="./assets/ship-nerf.gif" width="300"/></td>
+    <tr>
+  </table></p>
 
 ## 🤩 Demo
 
