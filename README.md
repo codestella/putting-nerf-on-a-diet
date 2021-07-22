@@ -97,7 +97,7 @@ You can toggle the semantic loss by “use_semantic_loss” in configuration fil
 ## 💎 Expriment Result
 
 
-### ❗ Rendered Rendering images by 8-shot learned Diet-NeRF (200000 iter)
+### ❗ Rendered Rendering images by 8-shot learned Diet-NeRF
 ### CHAIR / HOTDOG / DRUM
 
 <p align="center">
@@ -107,7 +107,7 @@ You can toggle the semantic loss by “use_semantic_loss” in configuration fil
     <tr>
 </table></p>
 
-### ❗ Rendered GIF by occluded 14-shot learned NeRF and Diet-NeRF (100000 iter)
+### ❗ Rendered GIF by occluded 14-shot learned NeRF and Diet-NeRF
 We made aritificial occulusion on the right side of image. 
 The reconstruction quality can be compared with this experiment.
 Diet NeRF shows better quailty than Original NeRF when It is occulused.
