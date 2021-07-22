@@ -50,12 +50,12 @@ def semantic_step_single(model, clip_model, rng, state, batch, lr):
     def semantic_loss(variables):
         c_image, f_image = model.apply(variables, key_0, key_1, random_rays, False, rgb_only = True)
         # reshape flat pixel to an image (assume 3 channels & square shape)
-        w = int(math.sqrt(c_image.shape[0]))
-        c_image = c_image.reshape([w, w, 3])
+        w = int(math.sqrt(f_image.shape[0]))
+        # c_image = c_image.reshape([w, w, 3])
         f_image = f_image.reshape([w, w, 3])
 
-        #src_embedding = clip_model.get_image_features(pixel_values=preprocess_for_CLIP(jnp.expand_dims(src_image,0).transpose(0, 3, 1, 2)))
-        src_embedding = clip_model.get_image_features(pixel_values=preprocess_for_CLIP(jnp.stack([c_image, f_image]).transpose(0, 3, 1, 2)))
+        src_embedding = clip_model.get_image_features(pixel_values=preprocess_for_CLIP(jnp.expand_dims(f_image,0).transpose(0, 3, 1, 2)))
+        # src_embedding = clip_model.get_image_features(pixel_values=preprocess_for_CLIP(jnp.stack([c_image, f_image]).transpose(0, 3, 1, 2)))
         src_embedding /= jnp.linalg.norm(src_embedding, axis=-1, keepdims=True)
         target_embedding = batch["embedding"]
         sc_loss = 0.5 * jnp.sum((src_embedding - target_embedding)**2)

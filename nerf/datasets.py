@@ -311,7 +311,7 @@ class Blender(Dataset):
         random_rays = self.camtoworld_matrix_to_rays(src_camtoworld, downsample = 4)
         cx = np.random.randint(80, 120)
         cy = np.random.randint(80, 120)
-        d = 80
+        d = 70
         random_rays = jax.tree_map(lambda x: x[cy-d:cy+d,cx-d:cx+d], random_rays)
         w = random_rays[0].shape[0] - random_rays[0].shape[0]%jax.local_device_count()
         random_rays = jax.tree_map(lambda x: x[:w,:w].reshape(-1,3), random_rays)
