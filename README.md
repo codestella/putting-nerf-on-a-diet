@@ -98,17 +98,16 @@ You can toggle the semantic loss by “use_semantic_loss” in configuration fil
 
 
 ### ❗ Rendered Rendering images by 8-shot learned Diet-NeRF (200000)
-![Text](./assets/chair.png)![Text](./assets/hotdog.png)![Text](./assets/drum.png)
 
 #### CHAIR
-<img src="./assets/chiar.png" width="200">
+<img src="./assets/chair.png" width="800">
 
 #### HOTDOG
 
-<img src="./assets/hotdog.png" width="200">
+<img src="./assets/hotdog.png" width="800">
 
 #### DRUM
-<img src="./assets/drum.png" width="200">
+<img src="./assets/drum.png" width="800">
 
 ### ❗ Rendering GIF images by 4-shot learned Diet-NeRF and Diet-NeRF (50000)
 
@@ -121,8 +120,8 @@ The animations below shows the performance difference between DietNeRF (left) v.
 This result is on the quite initial state and expected to be improved.
 
 #### SHIP
- ![Alt Text](./assets/ship-nerf.gif)
 
+<img src="./assets/ship-nerf.gif" width="500"><img src="./assets/ship-dietnerf.gif" width="500">
 
 
 ## 🤩 Demo
