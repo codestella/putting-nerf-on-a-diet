@@ -107,13 +107,6 @@ You can toggle the semantic loss by “use_semantic_loss” in configuration fil
     <tr>
 </table></p>
 
-### ❗ Rendering GIF images by 4-shot learned Diet-NeRF and Diet-NeRF (50000 iter)
-
-DietNeRF has a strong capacity to generalise on novel and challenging views with EXTREMELY SMALL TRAINING SAMPLES!  
-The animations below shows the performance difference between DietNeRF (left) v.s. NeRF (right) with only 4 training images: 
-
-
-
 ### ❗ Rendered GIF by occluded 14-shot learned NeRF and Diet-NeRF (100000 iter)
 We made aritificial occulusion on the right side of image. 
 The reconstruction quality can be compared with this experiment.
