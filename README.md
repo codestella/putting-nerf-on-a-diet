@@ -97,34 +97,37 @@ You can toggle the semantic loss by “use_semantic_loss” in configuration fil
 ## 💎 Expriment Result
 
 
-### ❗ Rendered Rendering images by 8-shot learned Diet-NeRF (200000)
+### ❗ Rendered Rendering images by 8-shot learned Diet-NeRF (200000 iter)
 
 #### CHAIR
-<img src="./assets/chair.png" width="400">
+<p align="center"><img src="./assets/chair.png" width="300"></p>
 
 #### HOTDOG
 
-<img src="./assets/hotdog.png" width="400">
+<p align="center"><img src="./assets/hotdog.png" width="300"></p>
 
 #### DRUM
-<img src="./assets/drum.png" width="400">
+<p align="center"><img src="./assets/drum.png" width="300"></p>
 
-### ❗ Rendering GIF images by 4-shot learned Diet-NeRF and Diet-NeRF (50000)
+### ❗ Rendering GIF images by 4-shot learned Diet-NeRF and Diet-NeRF (50000 iter)
 
 DietNeRF has a strong capacity to generalise on novel and challenging views with EXTREMELY SMALL TRAINING SAMPLES!  
 The animations below shows the performance difference between DietNeRF (left) v.s. NeRF (right) with only 4 training images: 
 
 
 
-### ❗ Rendered GIF by occluded 14-shot learned NeRF and Diet-NeRF
-This result is on the quite initial state and expected to be improved.
+### ❗ Rendered GIF by occluded 14-shot learned NeRF and Diet-NeRF (100000 iter)
+We made aritificial occulusion on the right side of image. 
+The reconstruction quality can be compared with this experiment.
+Diet NeRF shows better quailty than Original NeRF when It is occulused.
 
 #### SHIP
-<table>
-  <tr>
-    <td><img alt="" src="./assets/ship-dietnerf.gif" width="300"/></td><td><img alt="" src="./assets/ship-nerf.gif" width="300"/></td>
-  <tr>
-</table>
+<p align="center">
+  <table>
+    <tr>
+      <td><img alt="" src="./assets/ship-dietnerf.gif" width="300"/></td><td><img alt="" src="./assets/ship-nerf.gif" width="300"/></td>
+    <tr>
+  </table></p>
 
 ## 🤩 Demo
 
