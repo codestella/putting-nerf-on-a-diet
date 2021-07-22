@@ -98,16 +98,14 @@ You can toggle the semantic loss by “use_semantic_loss” in configuration fil
 
 
 ### ❗ Rendered Rendering images by 8-shot learned Diet-NeRF (200000 iter)
+### CHAIR / HOTDOG / DRUM
 
-#### CHAIR
-<p align="center"><img src="./assets/chair.png" width="300"></p>
-
-#### HOTDOG
-
-<p align="center"><img src="./assets/hotdog.png" width="300"></p>
-
-#### DRUM
-<p align="center"><img src="./assets/drum.png" width="300"></p>
+<p align="center">
+  <table>
+    <tr>
+      <td><img alt="" src="./assets/chair.png" width="300"/></td><td><img alt="" src="./assets/hotdog.png" width="300"/></td><td><img alt="" src="./assets/drum.png" width="300"/></td>
+    <tr>
+</table></p>
 
 ### ❗ Rendering GIF images by 4-shot learned Diet-NeRF and Diet-NeRF (50000 iter)
 
