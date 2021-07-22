@@ -15,17 +15,17 @@ FLAGS = flags.FLAGS
 
 @partial(jax.jit, static_argnums=[0])
 def semantic_loss(clip_model, src_image, target_embedding): 
-    # c_image = utils.unshard(src_image[0])
-    f_image = utils.unshard(src_image[1])
+    #c_image = utils.unshard(src_image[0])
+    f_image = utils.unshard(src_image[-1])
 
-    w = int(math.sqrt(src_image[1].size//3))
-    # c_image = c_image.reshape([w, w, 3])
+    w = int(math.sqrt(src_image[-1].size//3))
+    #c_image = c_image.reshape([w, w, 3])
     f_image = f_image.reshape([w, w, 3])
  
     src_embedding = clip_model.get_image_features(pixel_values=preprocess_for_CLIP(jnp.expand_dims(f_image,0).transpose(0, 3, 1, 2)))
-    # src_embedding = clip_model.get_image_features(pixel_values=preprocess_for_CLIP(jnp.stack([c_image, f_image]).transpose(0, 3, 1, 2)))
+    #src_embedding = clip_model.get_image_features(pixel_values=preprocess_for_CLIP(jnp.stack([c_image, f_image]).transpose(0, 3, 1, 2)))
     src_embedding /= jnp.linalg.norm(src_embedding, axis=-1, keepdims=True)
-    sc_loss = 0.5 * jnp.sum((src_embedding - target_embedding) ** 2)
+    sc_loss = 1 - jnp.sum(src_embedding * target_embedding)
     return sc_loss, f_image
 
 def semantic_step_multi(render_pfn, clip_model, rng, state, batch, lr):
@@ -50,14 +50,13 @@ def semantic_step_single(model, clip_model, rng, state, batch, lr):
     def semantic_loss(variables):
         c_image, f_image = model.apply(variables, key_0, key_1, random_rays, False, rgb_only = True)
         # reshape flat pixel to an image (assume 3 channels & square shape)
-        w = int(math.sqrt(f_image.shape[0]))
-        # c_image = c_image.reshape([w, w, 3])
+        w = int(math.sqrt(c_image.shape[0]))
+        c_image = c_image.reshape([w, w, 3])
         f_image = f_image.reshape([w, w, 3])
 
-        src_embedding = clip_model.get_image_features(pixel_values=preprocess_for_CLIP(jnp.expand_dims(f_image,0).transpose(0, 3, 1, 2)))
-        # src_embedding = clip_model.get_image_features(pixel_values=preprocess_for_CLIP(jnp.stack([c_image, f_image]).transpose(0, 3, 1, 2)))
+        #src_embedding = clip_model.get_image_features(pixel_values=preprocess_for_CLIP(jnp.expand_dims(src_image,0).transpose(0, 3, 1, 2)))
+        src_embedding = clip_model.get_image_features(pixel_values=preprocess_for_CLIP(jnp.stack([c_image, f_image]).transpose(0, 3, 1, 2)))
         src_embedding /= jnp.linalg.norm(src_embedding, axis=-1, keepdims=True)
-        src_embedding = jnp.array(src_embedding)
         target_embedding = batch["embedding"]
         sc_loss = 0.5 * jnp.sum((src_embedding - target_embedding)**2)
         return sc_loss * FLAGS.sc_loss_mult, f_image
@@ -122,4 +121,5 @@ def init_CLIP(dtype: str, model_name: Optional[str]) -> FlaxCLIPModel:
 
     if model_name is None:
         model_name = 'openai/clip-vit-base-patch32'
+
     return FlaxCLIPModel.from_pretrained(model_name, dtype=dtype)

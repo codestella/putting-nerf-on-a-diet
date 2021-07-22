@@ -229,6 +229,7 @@ def main(unused_argv):
     # for semantic loss update
     sc_image = None
     sc_loss = 0.
+    
     for step, batch in tqdm(zip(range(init_step, FLAGS.max_steps + 1), pdataset)):
         if reset_timer:
             t_loop_start = time.time()
@@ -270,17 +271,17 @@ def main(unused_argv):
         # only use host 0 to record results.
         if jax.host_id() == 0:
             if step % FLAGS.print_every == 0:
-                summary_writer.scalar("train_loss", stats.loss[0], step)
+                summary_writer.scalar("loss/train", stats.loss[0], step)
                 summary_writer.scalar("sc_loss", sc_loss, step)
-                summary_writer.scalar("train_psnr", stats.psnr[0], step)
-                summary_writer.scalar("train_loss_coarse", stats.loss_c[0], step)
-                summary_writer.scalar("train_psnr_coarse", stats.psnr_c[0], step)
+                summary_writer.scalar("psnr/train", stats.psnr[0], step)
+                summary_writer.scalar("train_coarse/loss", stats.loss_c[0], step)
+                summary_writer.scalar("train_coarse/psnr", stats.psnr_c[0], step)
                 summary_writer.scalar("weight_l2", stats.weight_l2[0], step)
                 avg_loss = np.mean(np.concatenate([s.loss for s in stats_trace]))
                 avg_psnr = np.mean(np.concatenate([s.psnr for s in stats_trace]))
                 stats_trace = []
-                summary_writer.scalar("train_avg_loss", avg_loss, step)
-                summary_writer.scalar("train_avg_psnr", avg_psnr, step)
+                summary_writer.scalar("train_avg/loss", avg_loss, step)
+                summary_writer.scalar("train_avg/psnr", avg_psnr, step)
                 summary_writer.scalar("learning_rate", lr, step)
                 steps_per_sec = FLAGS.print_every / (time.time() - t_loop_start)
                 reset_timer = True
@@ -325,7 +326,9 @@ def main(unused_argv):
                 rays_per_sec = num_rays / eval_time
                 summary_writer.scalar("test_rays_per_sec", rays_per_sec, step)
                 print(f"Eval {step}: {eval_time:0.3f}s., {rays_per_sec:0.0f} rays/sec")
+                summary_writer.scalar("psnr/test", psnr, step)
                 summary_writer.scalar("test_psnr", psnr, step)
+                summary_writer.scalar("ssim/ssim", ssim, step)
                 summary_writer.scalar("test_ssim", ssim, step)
                 if sc_image is not None:
                     summary_writer .image("random_ray_image", sc_image, step)
