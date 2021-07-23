@@ -9,7 +9,7 @@ batch_size: 1024
 randomized: true
 max_steps: 200000
 print_every: 100
-render_every: 500
+render_every: 1000
 save_every: 5000
 use_semantic_loss: true
 clip_model_name: openai/clip-vit-base-patch32
