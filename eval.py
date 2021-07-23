@@ -144,8 +144,7 @@ def main(unused_argv):
         _radius = 4.
         _phi = (30 * math.pi) / 180
         generate_spinning_gif(_radius, _phi, out_dir, frame_n=30)
-        print(f'RGB GIF file for spinning views written: {gif_fn}')
-        print(f'DISP GIF file for spinning views written: {gif_fn2}')
+        print('GIF file for spinning views written)')
         return
     else:
         print('generate GIF file AND evaluate model performance')
