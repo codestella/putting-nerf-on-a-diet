@@ -259,8 +259,8 @@ class Blender(Dataset):
 
         frames = np.arange(len(meta["frames"]))
         if few_shot > 0 and split == 'train':
-            np.random.seed(0)
-            np.random.shuffle(frames)
+            # np.random.seed(0)
+            # np.random.shuffle(frames)
             frames = frames[:few_shot]
 
         # if split == 'train':
@@ -312,7 +312,7 @@ class Blender(Dataset):
 
         cx = np.random.randint(320, 480)
         cy = np.random.randint(320, 480)
-        d = 160
+        d = 140
         
         random_rays = self.camtoworld_matrix_to_rays(src_camtoworld, downsample = 1)
         random_rays = jax.tree_map(lambda x: x[cy-d:cy+d:4,cx-d:cx+d:4], random_rays)

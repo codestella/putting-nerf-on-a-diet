@@ -243,14 +243,6 @@ def main(unused_argv):
             else:
                 sc_loss, sc_grad, sc_image = clip_utils.semantic_step_single(model, clip_model, keys[0], state, sc_batch, lr)
 
-            if jax.host_id() == 0 and step%FLAGS.print_every:
-                for mlp_k, mlp in grad['params'].items():
-                    for layer_k, layer_g in mlp.items():
-                        summary_writer.scalar("%s/%s/kernel_grad"%(mlp_k, layer_k), jnp.linalg.norm(jnp.mean(layer_g['kernel'],0)), step)
-                for mlp_k, mlp in sc_grad['params'].items():
-                    for layer_k, layer_g in mlp.items():
-                        summary_writer.scalar("%s/%s/kernel_sc_grad"%(mlp_k, layer_k), jnp.linalg.norm(layer_g['kernel']), step)
-  
             leaves, treedef = jax.tree_flatten(grad)
             sc_leaves, _ = jax.tree_flatten(sc_grad)
             grad = treedef.unflatten(g+jnp.expand_dims(sc_g,0) for g, sc_g in zip(leaves, sc_leaves))
