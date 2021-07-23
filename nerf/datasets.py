@@ -236,6 +236,7 @@ class Blender(Dataset):
         camera_angle_x = float(meta["camera_angle_x"])
         self.focal = .5 * self.w / np.tan(.5 * camera_angle_x)
         self.n_examples = self.images.shape[0]
+        self.dtype = flags.clip_output_dtype
 
         if flags.use_semantic_loss and clip_model is not None:
             embs = []
@@ -308,14 +309,18 @@ class Blender(Dataset):
         src_seed = int(time.time())
         src_rng = jax.random.PRNGKey(src_seed)
         src_camtoworld = np.array(clip_utils.random_pose(src_rng, (self.near, self.far)))
-        random_rays = self.camtoworld_matrix_to_rays(src_camtoworld, downsample = 4)
-        cx = np.random.randint(80, 120)
-        cy = np.random.randint(80, 120)
-        d = 70
-        random_rays = jax.tree_map(lambda x: x[cy-d:cy+d,cx-d:cx+d], random_rays)
+
+        cx = np.random.randint(320, 480)
+        cy = np.random.randint(320, 480)
+        d = 160
+        
+        random_rays = self.camtoworld_matrix_to_rays(src_camtoworld, downsample = 1)
+        random_rays = jax.tree_map(lambda x: x[cy-d:cy+d:4,cx-d:cx+d:4], random_rays)
         w = random_rays[0].shape[0] - random_rays[0].shape[0]%jax.local_device_count()
         random_rays = jax.tree_map(lambda x: x[:w,:w].reshape(-1,3), random_rays)
-        batch_dict["random_rays"] = random_rays
+        batch_dict["random_rays"] = utils.shard(random_rays)
+        if self.dtype == 'float16':
+            batch_dict = jax.tree_map(lambda x: x.astype(np.float16), batch_dict)
         return batch_dict
 
 class LLFF(Dataset):

@@ -136,7 +136,7 @@ class NerfModel(nn.Module):
             (comp_rgb, disp, acc),
         ]
 
-        if self.num_fine_samples > 0 and not(rgb_only):
+        if self.num_fine_samples > 0:
             z_vals_mid = .5 * (z_vals[..., 1:] + z_vals[..., :-1])
             key, rng_1 = random.split(rng_1)
 
@@ -191,8 +191,7 @@ class NerfModel(nn.Module):
             )
             ret.append((comp_rgb, disp, acc))
         if rgb_only:
-            #return [ret[0][0], ret[1][0]]
-            return [None, ret[0][0]]
+            return [ret[0][0], ret[1][0]]
         return ret
 
 def construct_nerf(key, example_batch, args):
