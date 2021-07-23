@@ -125,8 +125,8 @@ def main(unused_argv):
                                              _rng, False, chunk=4096)
             image = predict_to_image(color)
             gif_images.append(image)
-            gif_images2.append(disp)
-        gif_images2 = Image.fromarray(np.array(gif_images2disp[Ellipsis, 0]))
+            gif_images2.append(disp[Ellipsis, 0])
+        gif_images2 = Image.fromarray(np.array(gif_images2))
         gif_fn = os.path.join(output_dir, 'rgb_spinning.gif')
         gif_fn2 = os.path.join(output_dir, 'disp_spinning.gif')
         gif_images[0].save(gif_fn, save_all=True,
