@@ -70,7 +70,7 @@ def define_flags():
                         "float32/ float16 (float16 for memory saving)")
     flags.DEFINE_integer("sc_loss_every", 16,
                          "no. of steps to take before performing semantic loss evaluation")
-    flags.DEFINE_float("sc_loss_mult", 1e-1,
+    flags.DEFINE_float("sc_loss_mult", 1e-2,
                        "weighting for semantic loss from CLIP")
 
     # Dataset Flags
@@ -166,6 +166,8 @@ def define_flags():
 
     flags.DEFINE_integer("max_steps", 1000000,
                          "the number of optimization steps.")
+    flags.DEFINE_integer("stop_sc_loss", 1000000,
+                         "the number of sc_loss optimization steps")
     flags.DEFINE_integer("save_every", 10000,
                          "the number of steps to save a checkpoint.")
     flags.DEFINE_integer("print_every", 100,

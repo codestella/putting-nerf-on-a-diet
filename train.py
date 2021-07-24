@@ -236,7 +236,7 @@ def main(unused_argv):
 
         grad, stats, keys = train_pstep(keys, state, batch, lr, step, FLAGS.sc_loss_every)
         
-        if step%FLAGS.sc_loss_every == 0 and FLAGS.use_semantic_loss:
+        if step%FLAGS.sc_loss_every == 0 and FLAGS.use_semantic_loss and step < FLAGS.stop_sc_loss:
             sc_batch = dataset.get_clip_data()
             if jax.local_device_count() > 1:
                 sc_loss, sc_grad, sc_image = clip_utils.semantic_step_multi(render_pfn_, clip_model, keys[0], state, sc_batch, lr)
