@@ -52,9 +52,13 @@ Our JAX/Flax implementation currently supports:
 
 ## 🤩 Demo
 
+- Streamlit Space Demo
+
 You can check our Streamlit Space demo on following site !
 With any input camera pose, we can render the novel view synthesis.
 [https://huggingface.co/spaces/flax-community/DietNerf-Demo](https://huggingface.co/spaces/flax-community/DietNerf-Demo)
+
+- Colab Demo
 
 Moreover, we prapare the colab ipython notebook for you.
 You need colab pro account for running our model on the colab(For memory issue)
