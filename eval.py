@@ -237,8 +237,6 @@ def main(unused_argv):
                 _phi = (30 * math.pi) / 180
                 generate_spinning_gif(_radius, _phi, out_dir, frame_n=30)
                 print(f'GIF file for spinning views written')
-                generate_spinning_gif(_radius, _phi, out_dir, frame_n=30)
-                print(f'GIF file for spinning views written')
                 is_gif_written = True
 
         if FLAGS.eval_once:
