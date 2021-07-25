@@ -143,6 +143,9 @@ Diet NeRF shows better quailty than Original NeRF when It is occulused.
 <p align="center">
   <table>
     <tr>
+      <td>Diet NeRF</td><td>NeRF</td>
+    <tr>
+    <tr>
       <td><img alt="" src="assets/lego-14-occ-diet_.gif" width="300"/></td><td><img alt="" src="assets/lego-14-occ-nerf_.gif" width="300"/></td>
     <tr>
   </table></p>
@@ -150,6 +153,9 @@ Diet NeRF shows better quailty than Original NeRF when It is occulused.
 #### SHIP
 <p align="center">
   <table>
+    <tr>
+      <td>Diet NeRF</td><td>NeRF</td>
+    <tr>
     <tr>
       <td><img alt="" src="./assets/ship-dietnerf.gif" width="300"/></td><td><img alt="" src="./assets/ship-nerf.gif" width="300"/></td>
     <tr>
