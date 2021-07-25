@@ -112,30 +112,39 @@ def main(unused_argv):
         summary_writer = tensorboard.SummaryWriter(
             path.join(FLAGS.train_dir, "eval"))
 
-    def generate_spinning_gif(radius, phi, gif_fn, frame_n):
+    def generate_spinning_gif(radius, phi, output_dir, frame_n):
         _rng = random.PRNGKey(0)
         partial_render_fn = functools.partial(render_pfn, state.optimizer.target)
         gif_images = []
+        gif_images2 = []
         for theta in tqdm(np.linspace(-math.pi, math.pi, frame_n)):
             camtoworld = np.array(clip_utils.pose_spherical(radius, theta, phi))
             rays = dataset.camtoworld_matrix_to_rays(camtoworld, downsample=4)
             _rng, key0, key1 = random.split(_rng, 3)
-            color, _, _ = utils.render_image(partial_render_fn, rays,
+            color, disp, _ = utils.render_image(partial_render_fn, rays,
                                              _rng, False, chunk=4096)
             image = predict_to_image(color)
+            image2 = predict_to_image(disp[Ellipsis, 0])
             gif_images.append(image)
+            gif_images2.append(image2)
+
+        gif_fn = os.path.join(output_dir, 'rgb_spinning.gif')
+        gif_fn2 = os.path.join(output_dir, 'disp_spinning.gif')
         gif_images[0].save(gif_fn, save_all=True,
                            append_images=gif_images,
                            duration=100, loop=0)
-        return gif_images
+        gif_images2[0].save(gif_fn2, save_all=True,
+                           append_images=gif_images2,
+                           duration=100, loop=0)
+
+        #return gif_images, gif_images2
 
     if FLAGS.generate_gif_only:
         print('generate GIF file only')
         _radius = 4.
         _phi = (30 * math.pi) / 180
-        _gif_fn = os.path.join(out_dir, 'spinning.gif')
-        generate_spinning_gif(_radius, _phi, _gif_fn, frame_n=30)
-        print(f'GIF file for spinning views written: {_gif_fn}')
+        generate_spinning_gif(_radius, _phi, out_dir, frame_n=30)
+        print('GIF file for spinning views written)')
         return
     else:
         print('generate GIF file AND evaluate model performance')
@@ -149,6 +158,7 @@ def main(unused_argv):
             utils.makedirs(out_dir)
         psnr_values = []
         ssim_values = []
+
         #lpips_values = []
         if not FLAGS.eval_once:
             showcase_index = np.random.randint(0, dataset.size)
@@ -225,9 +235,8 @@ def main(unused_argv):
             if not is_gif_written:
                 _radius = 4.
                 _phi = (30 * math.pi) / 180
-                _gif_fn = os.path.join(out_dir, 'spinning.gif')
-                generate_spinning_gif(_radius, _phi, _gif_fn, frame_n=30)
-                print(f'GIF file for spinning views written: {_gif_fn}')
+                generate_spinning_gif(_radius, _phi, out_dir, frame_n=30)
+                print(f'GIF file for spinning views written')
                 is_gif_written = True
 
         if FLAGS.eval_once:

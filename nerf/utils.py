@@ -66,11 +66,11 @@ def define_flags():
     flags.DEFINE_bool("use_semantic_loss", True,
                       "whether use semantic loss or not")
     flags.DEFINE_string("clip_model_name", "openai/clip-vit-base-patch32", "model type for CLIP")
-    flags.DEFINE_string("clip_output_dtype", "float32",
+    flags.DEFINE_string("clip_output_dtype", "float16",
                         "float32/ float16 (float16 for memory saving)")
     flags.DEFINE_integer("sc_loss_every", 16,
                          "no. of steps to take before performing semantic loss evaluation")
-    flags.DEFINE_float("sc_loss_mult", 1e-3,
+    flags.DEFINE_float("sc_loss_mult", 1e-2,
                        "weighting for semantic loss from CLIP")
 
     # Dataset Flags
@@ -166,6 +166,8 @@ def define_flags():
 
     flags.DEFINE_integer("max_steps", 1000000,
                          "the number of optimization steps.")
+    flags.DEFINE_integer("stop_sc_loss", 1000000,
+                         "the number of sc_loss optimization steps")
     flags.DEFINE_integer("save_every", 10000,
                          "the number of steps to save a checkpoint.")
     flags.DEFINE_integer("print_every", 100,
@@ -267,15 +269,7 @@ def render_image(render_fn, rays, rng, normalize_disp, chunk=8192):
         start, stop = host_id * rays_per_host, (host_id + 1) * rays_per_host
         chunk_rays = namedtuple_map(lambda r: shard(r[start:stop]), chunk_rays)
         chunk_results = render_fn(key_0, key_1, chunk_rays)[-1]
-        # if jax.local_device_count() > 1:
-        #     results.append([unshard(x, padding) for x in chunk_results])
-        # else:
-        #     results.append([unshard(x[0], padding) for x in chunk_results])
-        # if len(chunk_results[0].shape) == 3:
-        #     results.append([unshard(x[0], padding) for x in chunk_results])
-        # else:
         results.append([unshard(x, padding) for x in chunk_results])
-
         # pylint: enable=cell-var-from-loop
     rgb, disp, acc = [jnp.concatenate(r, axis=0) for r in zip(*results)]
     # Normalize disp for visualization for ndc_rays in llff front-facing scenes.

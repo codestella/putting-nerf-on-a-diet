@@ -2,13 +2,15 @@
 
 <p align="center"><img width="450" alt="스크린샷 2021-07-04 오후 4 11 51" src="https://user-images.githubusercontent.com/77657524/126361638-4aad58e8-4efb-4fc5-bf78-f53d03799e1e.png"></p>
 
-the Pytorch, JAX/Flax based code implementation of this paper [Putting NeRF on a Diet : Ajay Jain, Matthew Tancik, Pieter Abbeel, Arxiv : https://arxiv.org/abs/2104.00677] 
-The model generates the novel view synthesis redering (NeRF: Neural Radiances Field) base on Fewshot learning.
-The semantic loss using pre-trained CLIP Vision Transformer embedding is used for 2D supervision for 3D. It outperforms the Original NeRF in 3D reconstruction for 
+Welcome to Putting NeRF on a Diet Project! 
+This project is the Pytorch, JAX/Flax based code implementation of this paper [Putting NeRF on a Diet : Ajay Jain, Matthew Tancik, Pieter Abbeel, Arxiv : https://arxiv.org/abs/2104.00677] 
+The model generates the novel view synthesis redering (NeRF: Neural Radiances Field) with Fewshot learning scheme.
+The semantic loss use the pre-trained CLIP Vision Transformer embedding. This information can give a 2D supervision for 3D.
+The Diet NeRF result outperforms the original NeRF in 3D reconstruction and neural rendering with only few images. 
 
 
 ##  🤗 Hugging Face Hub Repo URL:
-We will also upload our project on the Hugging Face Hub Repository. 
+We will also upload our project on the Hugging Face Hub Repository Also. 
 [https://huggingface.co/flax-community/putting-nerf-on-a-diet/](https://huggingface.co/flax-community/putting-nerf-on-a-diet/)
 
 Our JAX/Flax implementation currently supports:
@@ -46,6 +48,12 @@ Our JAX/Flax implementation currently supports:
 </tbody>
 </table>
 
+## 🤩 Demo
+
+You can check our Streamlit Space demo on following site !
+[https://huggingface.co/spaces/flax-community/DietNerf-Demo](https://huggingface.co/spaces/flax-community/DietNerf-Demo)
+
+
 ## 💻 Installation
 
 ```bash
@@ -65,15 +73,21 @@ pip install --upgrade jax jaxlib==0.1.57+cuda101 -f https://storage.googleapis.c
 pip install flax transformer[flax]
 ```
 
-## ⚽ Dataset & Methods
+## ⚽ Dataset 
 Download the datasets from the [NeRF official Google Drive](https://drive.google.com/drive/folders/128yBriW1IG_3NJ5Rp7APSTZsJqdJdfc1).
 Please download the `nerf_synthetic.zip` and unzip them
 in the place you like. Let's assume they are placed under `/tmp/jaxnerf/data/`.
 
+
+## 💖 Methods
+
+You can check more detail explaination about DietNeRF on following Notion Report 
+* DietNeRF detail explaination docs : (https://bit.ly/3x4FwcT)
+
 <p align="center"><img width="400" alt="스크린샷 2021-07-04 오후 4 11 51" src="https://user-images.githubusercontent.com/77657524/124376591-b312b780-dce2-11eb-80ad-9129d6f5eedb.png"></p> 
 
 Based on the principle
-that “a bulldozer is a bulldozer from any perspective”, our proposed DietNeRF supervises the radiance field from arbitrary poses
+that “a bulldozer is a bulldozer from any perspective”, Our proposed DietNeRF supervises the radiance field from arbitrary poses
 (DietNeRF cameras). This is possible because we compute a semantic consistency loss in a feature space capturing high-level
 scene attributes, not in pixel space. We extract semantic representations of renderings using the CLIP Vision Transformer, then
 maximize similarity with representations of ground-truth views. In
@@ -96,8 +110,7 @@ You can toggle the semantic loss by “use_semantic_loss” in configuration fil
 
 ## 💎 Expriment Result
 
-
-### ❗ Rendered Rendering images by 8-shot learned Diet-NeRF
+### ❗ Rendered Rendering images by 8-shot learned Diet-NeRF (200000 iter)
 ### CHAIR / HOTDOG / DRUM
 
 <p align="center">
@@ -107,7 +120,15 @@ You can toggle the semantic loss by “use_semantic_loss” in configuration fil
     <tr>
 </table></p>
 
-### ❗ Rendered GIF by occluded 14-shot learned NeRF and Diet-NeRF
+### ❗ Rendering GIF images by 4-shot learned Diet-NeRF and Diet-NeRF (50000 iter)
+
+DietNeRF has a strong capacity to generalise on novel and challenging views with EXTREMELY SMALL TRAINING SAMPLES!  
+The animations below shows the performance difference between DietNeRF (left) v.s. NeRF (right) with only 4 training images: 
+
+
+
+### ❗ Rendered GIF by occluded 14-shot learned NeRF and Diet-NeRF (100000 iter)
+
 We made aritificial occulusion on the right side of image. 
 The reconstruction quality can be compared with this experiment.
 Diet NeRF shows better quailty than Original NeRF when It is occulused.
@@ -120,10 +141,13 @@ Diet NeRF shows better quailty than Original NeRF when It is occulused.
     <tr>
   </table></p>
 
-## 🤩 Demo
-
-You can check our Streamlit Space Demo on following site !
-[https://huggingface.co/spaces/flax-community/DietNerf-Demo](https://huggingface.co/spaces/flax-community/DietNerf-Demo)
+#### LEGO
+<p align="center">
+  <table>
+    <tr>
+      <td><img alt="" src="./assets/lego-14-occ-diet.gif.gif" width="300"/></td><td><img alt="" src="./assets/lego-14-occ-nerf.gif" width="300"/></td>
+    <tr>
+  </table></p>
 
 ## 👨‍👧‍👦 Our Teams
 
@@ -172,8 +196,14 @@ This project is based on “JAX-NeRF”.
 Our Project is started in the HuggingFace X GoogleAI (JAX) Community Week Event.
 https://discuss.huggingface.co/t/open-to-the-community-community-week-using-jax-flax-for-nlp-cv/7104
 
-Thank you for Our Mentor Suraj and Organizers in JAX/Flax Community Week! 
+Thank you for our mentor Suraj and organizers in JAX/Flax Community Week! 
 Our team grows up with this community learning experience. It was wonderful time!
 
 <p align="center"><img width="250" alt="스크린샷 2021-07-04 오후 4 11 51" src="https://user-images.githubusercontent.com/77657524/126369170-5664076c-ac99-4157-bc53-b91dfb7ed7e1.jpeg"></p>
+
+Common Computer AI(https://comcom.ai/ko/) sponsered the multiple V100 GPUs for our project!
+Thank you so much for your support!
+<p align="center"><img width="250" alt="스크린샷" src="./assets/comcom.jpeg"></p>
+
+
 

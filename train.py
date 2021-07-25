@@ -50,7 +50,6 @@ print(f"detected device: {jax.local_devices()}")
 
 
 def train_step(model, clip_model, rng, state, batch, lr, step, K,):
-    # TODO make clip_grad input enable
     """One optimization step.
 
     Args:
@@ -102,7 +101,6 @@ def train_step(model, clip_model, rng, state, batch, lr, step, K,):
 
     (_, stats), grad = (
         jax.value_and_grad(loss_fn, has_aux=True)(state.optimizer.target))
-    grad = jax.lax.pmean(grad, axis_name="batch")
     stats = jax.lax.pmean(stats, axis_name="batch")
     
     # Clip the gradient by value.
@@ -118,16 +116,16 @@ def train_step(model, clip_model, rng, state, batch, lr, step, K,):
         mult = jnp.minimum(1, FLAGS.grad_max_norm / (1e-7 + grad_norm))
         grad = jax.tree_util.tree_map(lambda z: mult * z, grad)
 
-    #return grad, state, rng
+    return grad, stats, rng
     new_optimizer = state.optimizer.apply_gradient(grad, learning_rate =lr)
     new_state = state.replace(optimizer=new_optimizer)
     return new_state, stats, rng
 
 def update_step(state, grad, lr):
+    grad = jax.lax.pmean(grad, axis_name="batch")
     new_optimizer = state.optimizer.apply_gradient(grad, learning_rate=lr)
     new_state = state.replace(optimizer=new_optimizer)
     return new_state
-
 
 def main(unused_argv):
     #wandb.init(project="hf-flax-clip-nerf", entity="wandb", sync_tensorboard=True)
@@ -181,7 +179,7 @@ def main(unused_argv):
     update_pstep = jax.pmap(
         functools.partial(update_step,),
         axis_name="batch",
-        in_axes=(0, None, None),
+        in_axes=(0, 0, None),
         donate_argnums=(0,))
 
     def render_fn(variables, key_0, key_1, rays):
@@ -229,25 +227,28 @@ def main(unused_argv):
     # for semantic loss update
     sc_image = None
     sc_loss = 0.
+    
     for step, batch in tqdm(zip(range(init_step, FLAGS.max_steps + 1), pdataset)):
         if reset_timer:
             t_loop_start = time.time()
             reset_timer = False
         lr = learning_rate_fn(step)
 
-        if step%FLAGS.sc_loss_every == 0 and FLAGS.use_semantic_loss:
+        grad, stats, keys = train_pstep(keys, state, batch, lr, step, FLAGS.sc_loss_every)
+        
+        if step%FLAGS.sc_loss_every == 0 and FLAGS.use_semantic_loss and step < FLAGS.stop_sc_loss:
             sc_batch = dataset.get_clip_data()
             if jax.local_device_count() > 1:
                 sc_loss, sc_grad, sc_image = clip_utils.semantic_step_multi(render_pfn_, clip_model, keys[0], state, sc_batch, lr)
             else:
                 sc_loss, sc_grad, sc_image = clip_utils.semantic_step_single(model, clip_model, keys[0], state, sc_batch, lr)
-                sc_grad = jax.tree_map( lambda x: x[0], sc_grad)
-            
-        state, stats, keys = train_pstep(keys, state, batch, lr, step, FLAGS.sc_loss_every)
+
+            leaves, treedef = jax.tree_flatten(grad)
+            sc_leaves, _ = jax.tree_flatten(sc_grad)
+            grad = treedef.unflatten(g+jnp.expand_dims(sc_g,0) for g, sc_g in zip(leaves, sc_leaves))
         
-        if step%FLAGS.sc_loss_every == 0 and FLAGS.use_semantic_loss:
-            state = update_pstep(state, sc_grad, lr)
-       
+        state = update_pstep(state, grad, lr)
+
         if jax.host_id() == 0:
             stats_trace.append(stats)
         if step % FLAGS.gc_every == 0:
@@ -258,29 +259,31 @@ def main(unused_argv):
         # only use host 0 to record results.
         if jax.host_id() == 0:
             if step % FLAGS.print_every == 0:
-                summary_writer.scalar("train_loss", stats.loss[0], step)
+                summary_writer.scalar("loss/train", stats.loss[0], step)
                 summary_writer.scalar("sc_loss", sc_loss, step)
-                summary_writer.scalar("train_psnr", stats.psnr[0], step)
-                summary_writer.scalar("train_loss_coarse", stats.loss_c[0], step)
-                summary_writer.scalar("train_psnr_coarse", stats.psnr_c[0], step)
-                summary_writer.scalar("weight_l2", stats.weight_l2[0], step)
+                summary_writer.scalar("psnr/train", stats.psnr[0], step)
+                summary_writer.scalar("train_coarse/loss", stats.loss_c[0], step)
+                summary_writer.scalar("train_coarse/psnr", stats.psnr_c[0], step)
+
                 avg_loss = np.mean(np.concatenate([s.loss for s in stats_trace]))
                 avg_psnr = np.mean(np.concatenate([s.psnr for s in stats_trace]))
                 stats_trace = []
-                summary_writer.scalar("train_avg_loss", avg_loss, step)
-                summary_writer.scalar("train_avg_psnr", avg_psnr, step)
-                summary_writer.scalar("learning_rate", lr, step)
+                summary_writer.scalar("train_avg/loss", avg_loss, step)
+                summary_writer.scalar("train_avg/psnr", avg_psnr, step)
+
                 steps_per_sec = FLAGS.print_every / (time.time() - t_loop_start)
                 reset_timer = True
                 rays_per_sec = FLAGS.batch_size * steps_per_sec
-                summary_writer.scalar("train_steps_per_sec", steps_per_sec, step)
-                summary_writer.scalar("train_rays_per_sec", rays_per_sec, step)
+                summary_writer.scalar("stats/weight_l2", stats.weight_l2[0], step)
+                summary_writer.scalar("stats/learning_rate", lr, step)
+                summary_writer.scalar("iter_speed/train_steps_per_sec", steps_per_sec, step)
+                summary_writer.scalar("iter_speed/train_rays_per_sec", rays_per_sec, step)
                 precision = int(np.ceil(np.log10(FLAGS.max_steps))) + 1
                 print(("{:" + "{:d}".format(precision) + "d}").format(step) +
                       f"/{FLAGS.max_steps:d}: " + f"i_loss={stats.loss[0]:0.4f}, " +
                       f"avg_loss={avg_loss:0.4f}, " +
                       f"weight_l2={stats.weight_l2[0]:0.2e}, " +
-                    #   f"sc_loss={sc_loss:0.4f}, " +
+                      f"sc_loss={sc_loss:0.4f}, " +
                       f"lr={lr:0.2e}, {rays_per_sec:0.0f} rays/sec")
             if step % FLAGS.save_every == 0:
                 state_to_save = jax.device_get(jax.tree_map(lambda x: x[0], state))
@@ -311,10 +314,10 @@ def main(unused_argv):
                 eval_time = time.time() - t_eval_start
                 num_rays = jnp.prod(jnp.array(test_case["rays"].directions.shape[:-1]))
                 rays_per_sec = num_rays / eval_time
-                summary_writer.scalar("test_rays_per_sec", rays_per_sec, step)
+                summary_writer.scalar("iter_speed/test_rays_per_sec", rays_per_sec, step)
                 print(f"Eval {step}: {eval_time:0.3f}s., {rays_per_sec:0.0f} rays/sec")
-                summary_writer.scalar("test_psnr", psnr, step)
-                summary_writer.scalar("test_ssim", ssim, step)
+                summary_writer.scalar("psnr/test", psnr, step)
+                summary_writer.scalar("ssim/ssim", ssim, step)
                 if sc_image is not None:
                     summary_writer .image("random_ray_image", sc_image, step)
                 summary_writer.image("test_pred_color", pred_color, step)
