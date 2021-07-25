@@ -151,7 +151,7 @@ Diet NeRF shows better quailty than Original NeRF when It is occulused.
 <p align="center">
   <table>
     <tr>
-      <td><img alt="" src="./assets/ship-dietnerf.gif" width="300"/></td><td><img alt="" src="./assets/ship-nerf.gif" width="300"/></td>
+      <td><img alt="" src="./assets/ship-14-occ-diet.gif" width="300"/></td><td><img alt="" src="./assets/ship-14-occ-nerf.gif" width="300"/></td>
     <tr>
   </table></p>
 
