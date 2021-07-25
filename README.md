@@ -1,5 +1,7 @@
 # Putting NeRF on a Diet: Semantically Consistent Few-Shot View Synthesis Implementation
 
+[![Open in Streamlit](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://huggingface.co/spaces/flax-community/DietNerf-Demo) [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1etYeMTntw5mh3FvJv4Ubb7XUoTtt5J9G?usp=sharing)
+
 <p align="center"><img width="450" alt="스크린샷 2021-07-04 오후 4 11 51" src="https://user-images.githubusercontent.com/77657524/126361638-4aad58e8-4efb-4fc5-bf78-f53d03799e1e.png"></p>
 
 Welcome to Putting NeRF on a Diet Project! 
@@ -54,6 +56,11 @@ You can check our Streamlit Space demo on following site !
 With any input camera pose, we can render the novel view synthesis.
 [https://huggingface.co/spaces/flax-community/DietNerf-Demo](https://huggingface.co/spaces/flax-community/DietNerf-Demo)
 
+Moreover, we prapare the colab ipython notebook for you.
+You need colab pro account for running our model on the colab(For memory issue)
+[https://colab.research.google.com/drive/1etYeMTntw5mh3FvJv4Ubb7XUoTtt5J9G?usp=sharing
+](https://colab.research.google.com/drive/1etYeMTntw5mh3FvJv4Ubb7XUoTtt5J9G?usp=sharing
+)
 
 ## 💻 Installation
 
