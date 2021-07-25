@@ -81,8 +81,8 @@ in the place you like. Let's assume they are placed under `/tmp/jaxnerf/data/`.
 
 ## 💖 Methods
 
-You can check more detail explaination about DietNeRF on following Notion Report 
-* DietNeRF detail explaination docs : (https://bit.ly/3x4FwcT)
+You can check more detail explaination about DietNeRF on following **Notion Report**
+* 👉👉 VEEEERY Detail DietNeRF Explaination Docs : (https://bit.ly/3x4FwcT)👈👈
 
 <p align="center"><img width="400" alt="스크린샷 2021-07-04 오후 4 11 51" src="https://user-images.githubusercontent.com/77657524/124376591-b312b780-dce2-11eb-80ad-9129d6f5eedb.png"></p> 
 
@@ -110,24 +110,24 @@ You can toggle the semantic loss by “use_semantic_loss” in configuration fil
 
 ## 💎 Expriment Result
 
-### ❗ Rendered Rendering images by 8-shot learned Diet-NeRF (200000 iter)
+### ❗ Rendered Rendering images by 8-shot learned Diet-NeRF
 ### CHAIR / HOTDOG / DRUM
 
 <p align="center">
   <table>
     <tr>
-      <td><img alt="" src="./assets/chair.png" width="300"/></td><td><img alt="" src="./assets/hotdog.png" width="300"/></td><td><img alt="" src="./assets/drum.png" width="300"/></td>
+      <td><img alt="" src="./assets/chair.png" width="400"/></td><td><img alt="" src="./assets/hotdog.png" width="400"/></td><td><img alt="" src="./assets/drum.png" width="400"/></td>
     <tr>
 </table></p>
 
-### ❗ Rendering GIF images by 4-shot learned Diet-NeRF and Diet-NeRF (50000 iter)
+### ❗ Rendering GIF images by 4-shot learned Diet-NeRF and Diet-NeRF
 
 DietNeRF has a strong capacity to generalise on novel and challenging views with EXTREMELY SMALL TRAINING SAMPLES!  
 The animations below shows the performance difference between DietNeRF (left) v.s. NeRF (right) with only 4 training images: 
 
 
 
-### ❗ Rendered GIF by occluded 14-shot learned NeRF and Diet-NeRF (100000 iter)
+### ❗ Rendered GIF by occluded 14-shot learned NeRF and Diet-NeRF
 
 We made aritificial occulusion on the right side of image. 
 The reconstruction quality can be compared with this experiment.
