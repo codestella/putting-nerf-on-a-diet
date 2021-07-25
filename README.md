@@ -145,7 +145,7 @@ Diet NeRF shows better quailty than Original NeRF when It is occulused.
 <p align="center">
   <table>
     <tr>
-      <td><img alt="" src="./assets/lego-14-occ-diet.gif.gif" width="300"/></td><td><img alt="" src="./assets/lego-14-occ-nerf.gif" width="300"/></td>
+      <td><img alt="" src="./assets/lego-14-occ-diet.gif" width="300"/></td><td><img alt="" src="./assets/lego-14-occ-nerf.gif" width="300"/></td>
     <tr>
   </table></p>
 
@@ -201,7 +201,7 @@ Our team grows up with this community learning experience. It was wonderful time
 
 <p align="center"><img width="250" alt="스크린샷 2021-07-04 오후 4 11 51" src="https://user-images.githubusercontent.com/77657524/126369170-5664076c-ac99-4157-bc53-b91dfb7ed7e1.jpeg"></p>
 
-Common Computer AI(https://comcom.ai/ko/) sponsered the multiple V100 GPUs for our project!
+Common Computer AI(https://comcom.ai/ko/) sponsored the multiple V100 GPUs for our project!
 Thank you so much for your support!
 <p align="center"><img width="250" alt="스크린샷" src="./assets/comcom.jpeg"></p>
 
