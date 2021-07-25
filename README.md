@@ -51,6 +51,7 @@ Our JAX/Flax implementation currently supports:
 ## 🤩 Demo
 
 You can check our Streamlit Space demo on following site !
+With any input camera pose, we can render the novel view synthesis.
 [https://huggingface.co/spaces/flax-community/DietNerf-Demo](https://huggingface.co/spaces/flax-community/DietNerf-Demo)
 
 
