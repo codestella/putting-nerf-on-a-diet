@@ -119,18 +119,13 @@ DietNeRF has a strong capacity to generalise on novel and challenging views with
 <p align="center">
   <table>
     <tr>
-      <td><img alt="" src="./assets/lego-8-diet.gif" width="400"/></td><td><img alt="" src="./assets/drum.png" width="400"/></td>
-    <tr>
-    <tr>
-      <td><img alt="" src="./assets/material-8-diet.gif" width="400"/></td><td><img alt="" src="./assets/drum.png" width="400"/></td>
+      <td><img alt="" src="./assets/chair.png" width="400"/></td><td><img alt="" src="./assets/hotdog.png" width="400"/></td><td><img alt="" src="./assets/drum.png" width="400"/></td>
     <tr>
 </table></p>
-
-
 <p align="center">
   <table>
     <tr>
-      <td><img alt="" src="./assets/chair.png" width="400"/></td><td><img alt="" src="./assets/hotdog.png" width="400"/></td><td><img alt="" src="./assets/drum.png" width="400"/></td>
+      <td><img alt="" src="./assets/lego-8-diet-image.png" width="400"/></td><td><img alt="" src="./assets/materials-8-diet-image.png" width="400"/></td>
     <tr>
 </table></p>
 
@@ -156,7 +151,7 @@ Diet NeRF shows better quailty than Original NeRF when It is occulused.
 <p align="center">
   <table>
     <tr>
-      <td><img alt="" src="./assets/ship-dietnerf.gif" width="200"/></td><td><img alt="" src="./assets/ship-nerf.gif" width="200"/></td>
+      <td><img alt="" src="./assets/ship-dietnerf.gif" width="300"/></td><td><img alt="" src="./assets/ship-nerf.gif" width="300"/></td>
     <tr>
   </table></p>
 
