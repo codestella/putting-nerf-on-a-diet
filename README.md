@@ -181,7 +181,7 @@ This project is based on “JAX-NeRF”.
 }
 ```
 
-This project is based on “JAX-NeRF”.
+This project is based on “Putting NeRF on a Diet”.
 ```
 @misc{jain2021putting,
       title={Putting NeRF on a Diet: Semantically Consistent Few-Shot View Synthesis}, 
