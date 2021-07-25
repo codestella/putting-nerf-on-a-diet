@@ -111,7 +111,21 @@ You can toggle the semantic loss by “use_semantic_loss” in configuration fil
 ## 💎 Expriment Result
 
 ### ❗ Rendered Rendering images by 8-shot learned Diet-NeRF
+
+DietNeRF has a strong capacity to generalise on novel and challenging views with EXTREMELY SMALL TRAINING SAMPLES!
+
 ### CHAIR / HOTDOG / DRUM
+
+<p align="center">
+  <table>
+    <tr>
+      <td><img alt="" src="./assets/lego-8-diet.gif" width="400"/></td><td><img alt="" src="./assets/drum.png" width="400"/></td>
+    <tr>
+    <tr>
+      <td><img alt="" src="./assets/material-8-diet.gif" width="400"/></td><td><img alt="" src="./assets/drum.png" width="400"/></td>
+    <tr>
+</table></p>
+
 
 <p align="center">
   <table>
@@ -120,16 +134,9 @@ You can toggle the semantic loss by “use_semantic_loss” in configuration fil
     <tr>
 </table></p>
 
-### ❗ Rendering GIF images by 4-shot learned Diet-NeRF and Diet-NeRF
-
-DietNeRF has a strong capacity to generalise on novel and challenging views with EXTREMELY SMALL TRAINING SAMPLES!  
-The animations below shows the performance difference between DietNeRF (left) v.s. NeRF (right) with only 4 training images: 
-
-
-
 ### ❗ Rendered GIF by occluded 14-shot learned NeRF and Diet-NeRF
 
-We made aritificial occulusion on the right side of image. 
+We made aritificial occulusion on the right side of image (Only picked left side training poses).
 The reconstruction quality can be compared with this experiment.
 Diet NeRF shows better quailty than Original NeRF when It is occulused.
 
