@@ -114,7 +114,7 @@ You can toggle the semantic loss by “use_semantic_loss” in configuration fil
 
 DietNeRF has a strong capacity to generalise on novel and challenging views with EXTREMELY SMALL TRAINING SAMPLES!
 
-### CHAIR / HOTDOG / DRUM
+### CHAIR / HOTDOG / DRUM / LEGO / MATERIALS
 
 <p align="center">
   <table>
@@ -143,7 +143,7 @@ Diet NeRF shows better quailty than Original NeRF when It is occulused.
 <p align="center">
   <table>
     <tr>
-      <td><img alt="" src="assets/lego-14-occ-diet_.gif" width="200"/></td><td><img alt="" src="assets/lego-14-occ-nerf_.gif" width="200"/></td>
+      <td><img alt="" src="assets/lego-14-occ-diet_.gif" width="300"/></td><td><img alt="" src="assets/lego-14-occ-nerf_.gif" width="300"/></td>
     <tr>
   </table></p>
 
