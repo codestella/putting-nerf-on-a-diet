@@ -126,7 +126,7 @@ You can toggle the semantic loss by “use_semantic_loss” in configuration fil
 
 DietNeRF has a strong capacity to generalise on novel and challenging views with EXTREMELY SMALL TRAINING SAMPLES!
 
-### CHAIR / HOTDOG / DRUM / LEGO / MATERIALS
+### CHAIR / HOTDOG / DRUM / LEGO / MIC
 
 <p align="center">
   <table>
@@ -183,7 +183,7 @@ Diet NeRF shows better quailty than Original NeRF when It is occulused.
 | CLIP Team        | [Seunghyun Lee](https://github.com/sseung0703), [Sasikanth Kotti](https://github.com/ksasi), [Khali Sifullah](https://github.com/khalidsaifullaah) , [Sunghyun Kim](https://github.com/MrBananaHuman)                                |
 | Cloud TPU Team   | [Alex Lau](https://github.com/riven314), [Aswin Pyakurel](https://github.com/masapasa) , [JaeYoung Chung](https://github.com/robot0321),  [Sunghyun Kim](https://github.com/MrBananaHuman)                                                    |
 
-* Extremely Don't Sleep Contributors 🤣 :  [Seunghyun Lee](https://github.com/sseung0703), [Alex Lau](https://github.com/riven314), [Stella Yang](https://github.com/codestella)
+* Extremely Don't Sleep Contributors 🤣 :  [Seunghyun Lee](https://github.com/sseung0703), [Alex Lau](https://github.com/riven314), [Stella Yang](https://github.com/codestella), [Haswanth Aekula](https://github.com/hassiahk)
 
 
 
