@@ -82,7 +82,7 @@ in the place you like. Let's assume they are placed under `/tmp/jaxnerf/data/`.
 ## 💖 Methods
 
 You can check more detail explaination about DietNeRF on following **Notion Report**
-* 👉👉 VEEEERY Detail DietNeRF Explaination Docs : (https://bit.ly/3x4FwcT)👈👈
+* 👉👉 VEEEERY Detail DietNeRF Explaination Docs : (https://www.notion.so/DietNeRF-Putting-NeRF-on-a-Diet-4aeddae95d054f1d91686f02bdb74745)👈👈
 
 <p align="center"><img width="400" alt="스크린샷 2021-07-04 오후 4 11 51" src="https://user-images.githubusercontent.com/77657524/124376591-b312b780-dce2-11eb-80ad-9129d6f5eedb.png"></p> 
 
