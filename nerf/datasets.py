@@ -316,13 +316,14 @@ class Blender(Dataset):
         
         random_rays = self.camtoworld_matrix_to_rays(src_camtoworld, downsample = 1)
         random_rays = jax.tree_map(lambda x: x[cy-d:cy+d:4,cx-d:cx+d:4], random_rays)
+
         w = random_rays[0].shape[0] - random_rays[0].shape[0]%jax.local_device_count()
         random_rays = jax.tree_map(lambda x: x[:w,:w].reshape(-1,3), random_rays)
         batch_dict["random_rays"] = utils.shard(random_rays)
         if self.dtype == 'float16':
             batch_dict = jax.tree_map(lambda x: x.astype(np.float16), batch_dict)
         return batch_dict
-
+    
 class LLFF(Dataset):
     """LLFF Dataset."""
 
