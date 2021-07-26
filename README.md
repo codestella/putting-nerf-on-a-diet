@@ -126,7 +126,7 @@ You can toggle the semantic loss by “use_semantic_loss” in configuration fil
 
 DietNeRF has a strong capacity to generalise on novel and challenging views with EXTREMELY SMALL TRAINING SAMPLES!
 
-### CHAIR / HOTDOG / DRUM / LEGO / MIC
+### CHAIR / HOTDOG / DRUM / LEGO / MIC / SHIP
 
 <p align="center">
   <table>
