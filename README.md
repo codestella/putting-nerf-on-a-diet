@@ -131,7 +131,7 @@ DietNeRF has a strong capacity to generalise on novel and challenging views with
 <p align="center">
   <table>
     <tr>
-      <td><img alt="" src="./assets/chair.png" width="400"/></td><td><img alt="" src="./assets/hotdog.png" width="400"/></td><td><img alt="" src="./assets/drum.png" width="400"/></td>
+      <td><img alt="" src="./assets/chair-8-diet.gif" width="400"/></td><td><img alt="" src="./assets/hotdog-8-diet.gif" width="400"/></td><td><img alt="" src="./assets/drum-8-diet.gif" width="400"/></td>
     <tr>
 </table></p>
 <p align="center">
