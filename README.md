@@ -185,7 +185,26 @@ Diet NeRF shows better quailty than Original NeRF when It is occulused.
 
 * Extremely Don't Sleep Contributors 🤣 :  [Seunghyun Lee](https://github.com/sseung0703), [Alex Lau](https://github.com/riven314), [Stella Yang](https://github.com/codestella), [Haswanth Aekula](https://github.com/hassiahk)
 
+# 😎 What we improved from original JAX-NeRF : Innovation
+ - Neural rendering with fewshot images
+ - Hugging face CLIP based semantic loss loop
+ - You can choose coarse mlp / coarse + fine mlp training
+   (coarse + fine is on the `main` branch / coarse is on the `coarse_only` branch)
+    * coarse + fine : shows good geometric reconstruction
+    * coarse : shows good PSNR/SSIM result  
+ - Make Video/GIF rendering result, `--generate_gif_only` arg can run fast rendering GIF.
+ - Cleaning / refactoring the code 
 
+# 💞 Social Impact
+
+ - Game Industry
+ - Augmented Reality Industry
+ - Virtual Reality Industry
+ - Graphics Industry
+ - Online shopping
+ - Metaverse
+ - Digital Twin
+ - Mapping / SLAM
 
 ## 🌱 References
 This project is based on “JAX-NeRF”.
