@@ -194,6 +194,7 @@ Diet NeRF shows better quailty than Original NeRF when It is occulused.
     * coarse : shows good PSNR/SSIM result  
  - Make Video/GIF rendering result, `--generate_gif_only` arg can run fast rendering GIF.
  - Cleaning / refactoring the code 
+ - Made multiple models / colab / space for nice demo
 
 # 💞 Social Impact
 
