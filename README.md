@@ -109,7 +109,7 @@ single-view 2D image encoders to constrain a 3D representation.
 You can check detail information on the author's paper. Also, you can check the CLIP based semantic loss structure on the following image.
 <p align="center"><img width="600" alt="스크린샷 2021-07-04 오후 4 11 51" src="https://user-images.githubusercontent.com/77657524/126386709-a4ce7ff8-2a68-442f-b4ed-26971fb90e51.png"></p>
 
-Our code used JAX/FLAX framework for implementation. So that it can achieve much speed up than other NeRF code. Moreover, we implemented multiple GPU distribution ray code. it helps much smaller training time. At last, our code used hugging face, transformer,  CLIP model library. 
+Our code used JAX/FLAX framework for implementation. So that it can achieve much speed up than other NeRF codes. At last, our code used hugging face, transformer,  CLIP model library. 
 
 ## 🤟 How to use
 ```
@@ -185,18 +185,18 @@ Diet NeRF shows better quailty than Original NeRF when It is occulused.
 
 * Extremely Don't Sleep Contributors 🤣 :  [Seunghyun Lee](https://github.com/sseung0703), [Alex Lau](https://github.com/riven314), [Stella Yang](https://github.com/codestella), [Haswanth Aekula](https://github.com/hassiahk)
 
-# 😎 What we improved from original JAX-NeRF : Innovation
+## 😎 What we improved from original JAX-NeRF : Innovation
  - Neural rendering with fewshot images
  - Hugging face CLIP based semantic loss loop
  - You can choose coarse mlp / coarse + fine mlp training
    (coarse + fine is on the `main` branch / coarse is on the `coarse_only` branch)
     * coarse + fine : shows good geometric reconstruction
-    * coarse : shows good PSNR/SSIM result  
- - Make Video/GIF rendering result, `--generate_gif_only` arg can run fast rendering GIF.
+    * coarse : shows good PSNR / SSIM result  
+ - Make Video / GIF rendering result, `--generate_gif_only` arg can run fast rendering GIF.
  - Cleaning / refactoring the code 
  - Made multiple models / colab / space for nice demo
 
-# 💞 Social Impact
+## 💞 Social Impact
 
  - Game Industry
  - Augmented Reality Industry
