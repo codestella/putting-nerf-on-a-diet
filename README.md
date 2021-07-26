@@ -143,9 +143,9 @@ DietNeRF has a strong capacity to generalise on novel and challenging views with
 
 ### ❗ Rendered GIF by occluded 14-shot learned NeRF and Diet-NeRF
 
-We made aritificial occulusion on the right side of image (Only picked left side training poses).
+We made aritificial occlusion on the right side of image (Only picked left side training poses).
 The reconstruction quality can be compared with this experiment.
-Diet NeRF shows better quailty than Original NeRF when It is occulused.
+Diet NeRF shows better quailty than Original NeRF when It is occluded.
 
 #### Training poses
 <img width="1400" src="https://user-images.githubusercontent.com/26036843/126111980-4f332c87-a7f0-42e0-a355-8e77621bbca4.png">
