@@ -82,6 +82,7 @@ class Dataset(threading.Thread):
         self.far = flags.far
         self.near = flags.near
         self.max_steps = flags.max_steps
+        self.shuffle_seed = flags.shuffle_seed
         self.start()
 
     def __iter__(self):
@@ -259,8 +260,8 @@ class Blender(Dataset):
 
         frames = np.arange(len(meta["frames"]))
         if few_shot > 0 and split == 'train':
-            # np.random.seed(0)
-            # np.random.shuffle(frames)
+            np.random.seed(self.shuffle_seed)
+            np.random.shuffle(frames)
             frames = frames[:few_shot]
 
         # if split == 'train':
@@ -285,7 +286,8 @@ class Blender(Dataset):
             cams.append(np.array(frame["transform_matrix"], dtype=np.float32))
             images.append(image)
 
-        print(f'No. of samples: {len(frames)}')
+        print(f'No. of samples: {len(frames)}.')
+        print(f'shuffle_seed: {self.shuffle_seed} image_indexes: {frames}')
         return cams, images, meta
 
     def _next_train(self):

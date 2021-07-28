@@ -74,6 +74,8 @@ def define_flags():
                        "weighting for semantic loss from CLIP")
 
     # Dataset Flags
+    flags.DEFINE_integer("shuffle_seed", 0,
+                         "random seed for shuffling before selecting training set")
     # TODO(pratuls): rename to dataset_loader and consider cleaning up
     flags.DEFINE_enum("dataset", "blender",
                       list(k for k in datasets.dataset_dict.keys()),
