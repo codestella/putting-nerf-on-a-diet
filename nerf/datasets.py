@@ -67,6 +67,7 @@ class Dataset(threading.Thread):
         self.daemon = True
         self.use_pixel_centers = flags.use_pixel_centers
         self.split = split
+        self.shuffle_seed = flags.shuffle_seed
 
         if split == "train":
             self._train_init(flags, clip_model)
@@ -82,7 +83,6 @@ class Dataset(threading.Thread):
         self.far = flags.far
         self.near = flags.near
         self.max_steps = flags.max_steps
-        self.shuffle_seed = flags.shuffle_seed
         self.start()
 
     def __iter__(self):
