@@ -251,8 +251,7 @@ class Blender(Dataset):
             np.random.shuffle(self.image_idx)
             self.image_idx = self.image_idx.tolist()
 
-    @staticmethod
-    def load_files(data_dir, split, factor, few_shot):
+    def load_files(self, data_dir, split, factor, few_shot):
         with utils.open_file(path.join(data_dir, "transforms_{}.json".format(split)), "r") as fp:
             meta = json.load(fp)
         images = []
