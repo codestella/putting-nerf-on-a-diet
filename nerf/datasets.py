@@ -296,8 +296,16 @@ class Blender(Dataset):
         return batch_dict
 
     def get_clip_data(self, size, downsample):
-        # Generate rays according to random pose, crop, and downsample it to reduce memory cost.
-        pre-compute embedded feature.
+        '''
+            Generate rays according to random pose, crop, and downsample it to reduce memory cost.
+        
+            Args
+                size: integer, crop size of random rays
+                downsample: integer, downsample ratio of random rays
+
+            Return
+                batch_dice: dictionary, contains, random_rays, embedded feature.
+        '''
         if len(self.image_idx) == 0:
             self.image_idx = np.arange(self.images.shape[0])
             np.random.shuffle(self.image_idx)

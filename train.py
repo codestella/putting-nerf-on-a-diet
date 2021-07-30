@@ -170,7 +170,7 @@ def main(unused_argv):
         functools.partial(train_step, model),
         axis_name="batch",
         in_axes=(0, 0, 0),
-        donate_argnums=(1,))
+        donate_argnums=(2,))
     
     update_pstep = jax.pmap(
         functools.partial(update_step,),
