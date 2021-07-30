@@ -117,7 +117,7 @@ def rot_theta(th):
 def pose_spherical(radius, theta, phi):
     '''
         The codes for generating random pose is based on https://github.com/yenchenlin/nerf-pytorch/blob/ec26d1c17d9ba2a897bc2ab254a0e15fce0d83b8/load_LINEMOD.py.
-        and modified to make each coordinates indicate below.
+        and modified to make each coordinate indicates below.
 
                theta
                  ^
