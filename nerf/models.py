@@ -64,6 +64,7 @@ class NerfModel(nn.Module):
           rng_1: jnp.ndarray, random number generator for fine model sampling.
           rays: util.Rays, a namedtuple of ray origins, directions, and viewdirs.
           randomized: bool, use randomized stratified sampling.
+          rgb_only: bool, return only rgb
 
         Returns:
           ret: list, [(rgb_coarse, disp_coarse, acc_coarse), (rgb, disp, acc)]

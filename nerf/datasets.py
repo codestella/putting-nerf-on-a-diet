@@ -67,6 +67,7 @@ class Dataset(threading.Thread):
         self.daemon = True
         self.use_pixel_centers = flags.use_pixel_centers
         self.split = split
+        self.shuffle_seed = flags.shuffle_seed
 
         if split == "train":
             self._train_init(flags, clip_model)
@@ -239,6 +240,7 @@ class Blender(Dataset):
         self.dtype = flags.clip_output_dtype
 
         if flags.use_semantic_loss and clip_model is not None:
+            # pre-compute embedded features of training dataset.
             embs = []
             for img in self.images:
                 img = np.expand_dims(np.transpose(img,[2,0,1]), 0)
@@ -250,8 +252,7 @@ class Blender(Dataset):
             np.random.shuffle(self.image_idx)
             self.image_idx = self.image_idx.tolist()
 
-    @staticmethod
-    def load_files(data_dir, split, factor, few_shot):
+    def load_files(self, data_dir, split, factor, few_shot):
         with utils.open_file(path.join(data_dir, "transforms_{}.json".format(split)), "r") as fp:
             meta = json.load(fp)
         images = []
@@ -259,13 +260,10 @@ class Blender(Dataset):
 
         frames = np.arange(len(meta["frames"]))
         if few_shot > 0 and split == 'train':
-            # np.random.seed(0)
-            # np.random.shuffle(frames)
+            np.random.seed(self.shuffle_seed)
+            np.random.shuffle(frames)
             frames = frames[:few_shot]
 
-        # if split == 'train':
-        #     frames = [2,5,10,40,52,53,69,78,83,85,90,94,96,97]
-        
         for i in frames:
             frame = meta["frames"][i]
             fname = os.path.join(data_dir, frame["file_path"] + ".png")
@@ -285,7 +283,8 @@ class Blender(Dataset):
             cams.append(np.array(frame["transform_matrix"], dtype=np.float32))
             images.append(image)
 
-        print(f'No. of samples: {len(frames)}')
+        print(f'No. of samples: {len(frames)}.')
+        print(f'shuffle_seed: {self.shuffle_seed} image_indexes: {frames}')
         return cams, images, meta
 
     def _next_train(self):
@@ -296,7 +295,17 @@ class Blender(Dataset):
             raise NotImplementedError
         return batch_dict
 
-    def get_clip_data(self):
+    def get_clip_data(self, size, downsample):
+        '''
+            Generate rays according to random pose, crop, and downsample it to reduce memory cost.
+        
+            Args
+                size: integer, crop size of random rays
+                downsample: integer, downsample ratio of random rays
+
+            Return
+                batch_dice: dictionary, contains, random_rays, embedded feature.
+        '''
         if len(self.image_idx) == 0:
             self.image_idx = np.arange(self.images.shape[0])
             np.random.shuffle(self.image_idx)
@@ -308,17 +317,20 @@ class Blender(Dataset):
 
         src_seed = int(time.time())
         src_rng = jax.random.PRNGKey(src_seed)
+        # sample the random pose and generate rays from it.
         src_camtoworld = np.array(clip_utils.random_pose(src_rng, (self.near, self.far)))
+        random_rays = self.camtoworld_matrix_to_rays(src_camtoworld, downsample = 1)
 
+        # randomly crop the rays and downsample it.
         cx = np.random.randint(320, 480)
         cy = np.random.randint(320, 480)
-        d = 140
+        d = size//2
+        random_rays = jax.tree_map(lambda x: x[cy-d:cy+d:downsample,cx-d:cx+d:downsample], random_rays)
         
-        random_rays = self.camtoworld_matrix_to_rays(src_camtoworld, downsample = 1)
-        random_rays = jax.tree_map(lambda x: x[cy-d:cy+d:4,cx-d:cx+d:4], random_rays)
-
+        # cut the last few boundries to make the ray matrix evenly devided into devices.
         w = random_rays[0].shape[0] - random_rays[0].shape[0]%jax.local_device_count()
         random_rays = jax.tree_map(lambda x: x[:w,:w].reshape(-1,3), random_rays)
+
         batch_dict["random_rays"] = utils.shard(random_rays)
         if self.dtype == 'float16':
             batch_dict = jax.tree_map(lambda x: x.astype(np.float16), batch_dict)

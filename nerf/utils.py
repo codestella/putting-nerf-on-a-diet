@@ -72,8 +72,14 @@ def define_flags():
                          "no. of steps to take before performing semantic loss evaluation")
     flags.DEFINE_float("sc_loss_mult", 1e-2,
                        "weighting for semantic loss from CLIP")
+    flags.DEFINE_integer("random_ray_size", 300,
+                         "H and W of random rays size")
+    flags.DEFINE_integer("random_ray_downsample", 4,
+                         "the downsample factor of random rays, the random rays shape will be random_ray_size//random_ray_downsample")
 
     # Dataset Flags
+    flags.DEFINE_integer("shuffle_seed", 0,
+                         "random seed for shuffling before selecting training set")
     # TODO(pratuls): rename to dataset_loader and consider cleaning up
     flags.DEFINE_enum("dataset", "blender",
                       list(k for k in datasets.dataset_dict.keys()),
