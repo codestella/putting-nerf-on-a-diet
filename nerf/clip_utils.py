@@ -26,7 +26,25 @@ def semantic_loss(clip_model, src_image, target_embedding):
     sc_loss = 2 - jnp.sum(src_embedding * target_embedding)
     return sc_loss, f_image
 
-def semantic_step_multi(render_pfn, clip_model, rng, state, batch, lr):
+def semantic_step_multi(render_pfn, clip_model, rng, state, batch):
+    '''
+    Semantic loss training step on multiple devices
+    This function composed of two parts, i.e., pmapped rendering function on multi devices and semantic loss function on a single device:
+    Note that rays can be sharded to each device, but rendered image can't
+
+    Args:
+        model: NeRF model
+        clip_model: CLIP_model
+        rng: jnp.ndarray, random number generator.
+        state: utils.TrainState, state of the model/optimizer.
+        batch: dict, a mini-batch of data for semantic information training
+        
+    Return:
+        sc_loss: float, semantic consistency loss to log
+        grad: gradients calculated by semantic_loss.
+        src_image: generated image from the random pose.
+    '''
+
     random_rays = batch["random_rays"]
     target_embedding = batch["embedding"]
     rng, key_0, key_1 = random.split(rng,3)
@@ -39,7 +57,23 @@ def semantic_step_multi(render_pfn, clip_model, rng, state, batch, lr):
     return sc_loss, grad, src_image
 
 @partial(jax.jit, static_argnums=[0, 1])
-def semantic_step_single(model, clip_model, rng, state, batch, lr):
+def semantic_step_single(model, clip_model, rng, state, batch):
+    '''
+    Semantic loss training step on a single device
+
+    Args:
+        model: NeRF model
+        clip_model: CLIP_model
+        rng: jnp.ndarray, random number generator.
+        state: utils.TrainState, state of the model/optimizer.
+        batch: dict, a mini-batch of data for semantic information training
+        
+    Return:
+        sc_loss: float, semantic consistency loss to log
+        grad: gradients calculated by semantic_loss.
+        src_image: generated image from the random pose.
+    '''
+
     random_rays = jax.tree_map(lambda x: x.reshape(-1,3), batch["random_rays"])
     target_embedding = batch["embedding"]
     rng, key_0, key_1 = random.split(rng,3)
@@ -54,8 +88,10 @@ def semantic_step_single(model, clip_model, rng, state, batch, lr):
         src_embedding /= jnp.linalg.norm(src_embedding, axis=-1, keepdims=True)
         sc_loss = 2 - jnp.sum(src_embedding * target_embedding)
         return sc_loss * FLAGS.sc_loss_mult, f_image
+
     (sc_loss, src_image), grad = jax.value_and_grad(semantic_loss, has_aux = True)(jax.device_get(jax.tree_map(lambda x:x[0], state)).optimizer.target)
     return sc_loss, grad, src_image
+
 
 def trans_t(t):
     return jnp.array([
@@ -79,6 +115,19 @@ def rot_theta(th):
         [0, 0, 0, 1]], dtype=jnp.float32)
 
 def pose_spherical(radius, theta, phi):
+    '''
+        The codes for generating random pose is based on https://github.com/yenchenlin/nerf-pytorch/blob/ec26d1c17d9ba2a897bc2ab254a0e15fce0d83b8/load_LINEMOD.py.
+        and modified to make each coordinates indicate below.
+
+               theta
+                 ^
+        - phi <= o => phi 
+                /
+            radius 
+
+        Args:
+            components of spharical coordinates.
+    '''
     c2w = trans_t(radius)
     c2w = rot_phi(phi) @ c2w
     c2w = rot_theta(theta) @ c2w
@@ -86,6 +135,16 @@ def pose_spherical(radius, theta, phi):
     return c2w
 
 def random_pose(rng, bds):
+    '''
+    sample random poses in the upper hemisphere.
+
+    Args:
+        rng: jnp.ndarray, random number generator.
+        bds: boundaries of radious
+
+    Return:
+        Translation-rotation matrix according to a random pose:
+    '''
     rng, *rng_inputs = jax.random.split(rng, 3)
     radius = random.uniform(rng_inputs[1], minval=bds[0], maxval=bds[1])
     theta = random.uniform(rng_inputs[1], minval=-jnp.pi, maxval=jnp.pi)
@@ -94,9 +153,11 @@ def random_pose(rng, bds):
 
 def preprocess_for_CLIP(image):
     """
-    jax-based preprocessing for CLIP
-    image  [B, 3, H, W]: batch image
-    return [B, 3, 224, 224]: pre-processed image for CLIP
+        jax-based preprocessing for CLIP
+        Args:
+            image [B, 3, H, W]: batch image
+        Return
+            image [B, 3, 224, 224]: pre-processed image for CLIP
     """
     B, D, H, W = image.shape
     mean = jnp.array([0.48145466, 0.4578275, 0.40821073]).reshape(1, 3, 1, 1)
@@ -106,6 +167,14 @@ def preprocess_for_CLIP(image):
     return image
 
 def init_CLIP(dtype: str, model_name: Optional[str]) -> FlaxCLIPModel:
+    """
+        initialize jax-based CLIP model
+        Args:
+            dtype: string, data type of CLIP
+            model_name: string, CLIP model's name
+        Return
+            CLIP model
+    """
     if dtype == 'float16':
         dtype = jnp.float16
     elif dtype == 'float32':

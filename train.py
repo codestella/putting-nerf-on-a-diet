@@ -49,18 +49,17 @@ if "COLAB_TPU_ADDR" in os.environ:
 print(f"detected device: {jax.local_devices()}")
 
 
-def train_step(model, clip_model, rng, state, batch, lr, step, K,):
-    """One optimization step.
+def train_step(model, rng, state, batch):
+    """One forward and back propagation step for main loss.
 
     Args:
         model: The linen model.
         rng: jnp.ndarray, random number generator.
         state: utils.TrainState, state of the model/optimizer.
         batch: dict, a mini-batch of data for training.
-        lr: float, real-time learning rate.
-
+        
     Returns:
-        new_state: utils.TrainState, new training state.
+        gradients: grdients caculated by main loss.
         stats: list. [(loss, psnr), (loss_coarse, psnr_coarse)].
         rng: jnp.ndarray, updated random number generator.
     """
@@ -117,9 +116,6 @@ def train_step(model, clip_model, rng, state, batch, lr, step, K,):
         grad = jax.tree_util.tree_map(lambda z: mult * z, grad)
 
     return grad, stats, rng
-    new_optimizer = state.optimizer.apply_gradient(grad, learning_rate =lr)
-    new_state = state.replace(optimizer=new_optimizer)
-    return new_state, stats, rng
 
 def update_step(state, grad, lr):
     grad = jax.lax.pmean(grad, axis_name="batch")
@@ -171,10 +167,10 @@ def main(unused_argv):
         lr_delay_mult=FLAGS.lr_delay_mult)
 
     train_pstep = jax.pmap(
-        functools.partial(train_step, model, clip_model),
+        functools.partial(train_step, model),
         axis_name="batch",
-        in_axes=(0, 0, 0, None, None, None),
-        donate_argnums=(2,))
+        in_axes=(0, 0, 0),
+        donate_argnums=(1,))
     
     update_pstep = jax.pmap(
         functools.partial(update_step,),
@@ -192,6 +188,8 @@ def main(unused_argv):
         axis_name="batch")
 
     def render_fn_(variables, key_0, key_1, rays):
+        # Render function for semantic loss paath.
+        # It only returns rgb
         return model.apply(variables, key_0, key_1, rays, False, True)
 
     render_pfn_ = jax.pmap(
@@ -234,14 +232,19 @@ def main(unused_argv):
             reset_timer = False
         lr = learning_rate_fn(step)
 
-        grad, stats, keys = train_pstep(keys, state, batch, lr, step, FLAGS.sc_loss_every)
+        # calculate gradients by main loss
+        grad, stats, keys = train_pstep(keys, state, batch)
         
         if step%FLAGS.sc_loss_every == 0 and FLAGS.use_semantic_loss and step < FLAGS.stop_sc_loss:
-            sc_batch = dataset.get_clip_data()
+            # calculate gradients by semantic loss at every FLAGS.sc_loss_every steps until step < FLAGS.stop_sc_loss.
+            sc_batch = dataset.get_clip_data(size = FLAGS.random_ray_size, downsample = FLAGS.random_ray_downsample)
+            
             if jax.local_device_count() > 1:
-                sc_loss, sc_grad, sc_image = clip_utils.semantic_step_multi(render_pfn_, clip_model, keys[0], state, sc_batch, lr)
+                # partially fit compiled function to allow rendering on multi-gpu
+                sc_loss, sc_grad, sc_image = clip_utils.semantic_step_multi(render_pfn_, clip_model, keys[0], state, sc_batch)
             else:
-                sc_loss, sc_grad, sc_image = clip_utils.semantic_step_single(model, clip_model, keys[0], state, sc_batch, lr)
+                # fully jit compiled function for a single device
+                sc_loss, sc_grad, sc_image = clip_utils.semantic_step_single(model, clip_model, keys[0], state, sc_batch)
 
             leaves, treedef = jax.tree_flatten(grad)
             sc_leaves, _ = jax.tree_flatten(sc_grad)
