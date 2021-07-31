@@ -113,9 +113,9 @@ python -m train \
 ```
 You can toggle the semantic loss by “use_semantic_loss” in configuration files.
 
-## 💎 Expriment Result
+## 💎 Experimental Results
 
-### ❗ Rendered Rendering images by 8-shot learned Diet-NeRF
+### ❗ Rendered Rendering images by 8-shot learned DietNeRF
 
 DietNeRF has a strong capacity to generalise on novel and challenging views with EXTREMELY SMALL TRAINING SAMPLES!
 
@@ -178,7 +178,7 @@ Diet NeRF shows better quailty than Original NeRF when It is occluded.
 
 * Extremely Don't Sleep Contributors 🤣:  [Seunghyun Lee](https://github.com/sseung0703), [Alex Lau](https://github.com/riven314), [Stella Yang](https://github.com/codestella), [Haswanth Aekula](https://github.com/hassiahk)
 
-## 😎 What we improved from original JAX-NeRF : Innovation
+## 😎 What we improved from original JAX-NeRF: Innovation
  - Neural rendering with fewshot images
  - Hugging face CLIP based semantic loss loop
  - You can choose coarse mlp / coarse + fine mlp training
@@ -230,15 +230,14 @@ This project is based on “Putting NeRF on a Diet”.
 ## ❤️ Special Thanks 
 
 
-Our Project is started in the HuggingFace X GoogleAI (JAX) Community Week Event.
-https://discuss.huggingface.co/t/open-to-the-community-community-week-using-jax-flax-for-nlp-cv/7104
+Our Project is started in the [HuggingFace X GoogleAI (JAX) Community Week Event](https://discuss.huggingface.co/t/open-to-the-community-community-week-using-jax-flax-for-nlp-cv/7104).
 
 Thank you for our mentor Suraj and organizers in JAX/Flax Community Week! 
 Our team grows up with this community learning experience. It was wonderful time!
 
 <p align="center"><img width="250" alt="스크린샷 2021-07-04 오후 4 11 51" src="https://user-images.githubusercontent.com/77657524/126369170-5664076c-ac99-4157-bc53-b91dfb7ed7e1.jpeg"></p>
 
-Common Computer AI(https://comcom.ai/ko/) sponsored the multiple V100 GPUs for our project!
+[Common Computer AI](https://comcom.ai/en/) sponsored multiple V100 GPUs for our project!
 Thank you so much for your support!
 <p align="center"><img width="250" alt="스크린샷" src="./assets/comcom.jpeg"></p>
 
