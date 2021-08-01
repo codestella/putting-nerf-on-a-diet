@@ -12,9 +12,26 @@ Besides this repo, you can check our write-up and demo here:
 - ✍️ **[Write-up in Notion](https://steep-cycle-f6b.notion.site/DietNeRF-Putting-NeRF-on-a-Diet-4aeddae95d054f1d91686f02bdb74745)**: more details of DietNeRF and our experiments
 - ✨ **[Demo in Hugging Face Space](https://huggingface.co/spaces/flax-community/DietNerf-Demo)**: showcase our trained DietNeRFs by Streamlit
 
+## 🤩 Demo
+1. You can check out [our demo in Hugging Face Space](https://huggingface.co/spaces/flax-community/DietNerf-Demo)
+2. Or you can set up our Streamlit demo locally (model checkpoints will be fetched automatically upon startup)
+```shell
+pip install -r requirements_demo.txt
+streamlit run app.py
+```
+
+<p align="center"><img width="750" height="550" alt="Streamlit Demo" src="assets/space_demo.png"></p>
+
+## ✨ Implementation
+
+Our code is written in JAX/ Flax and mainly based upon [jaxnerf](https://github.com/google-research/google-research/tree/master/jaxnerf) from Google Research. The base code is highly optimized in GPU & TPU. For semantic consistency loss, we utilize pretrained CLIP Vision Transformer from [transformers](https://github.com/huggingface/transformers) library.  
+
+To learn more about DietNeRF, our experiments and implementation, you are highly recommended to check out our very detailed **[Notion write-up](https://www.notion.so/DietNeRF-Putting-NeRF-on-a-Diet-4aeddae95d054f1d91686f02bdb74745)**!
+
+<p align="center"><img width="600" height="800" alt="스크린샷 2021-07-04 오후 4 11 51" src="assets/report_thumbnail.png"></p> 
 
 
-##  🤗 Hugging Face Model Hub Repo
+ ##  🤗 Hugging Face Model Hub Repo
 You can also find our project and our model checkpoints on our [Hugging Face Model Hub Repository](https://huggingface.co/flax-community/putting-nerf-on-a-diet/). The models checkpoints are located in `models` folder.
 
 Our JAX/Flax implementation currently supports:
@@ -52,26 +69,6 @@ Our JAX/Flax implementation currently supports:
 </tbody>
 </table>
 
-## 🤩 Demo
-1. You can check out [our demo in Hugging Face Space](https://huggingface.co/spaces/flax-community/DietNerf-Demo)
-2. Or you can set up our Streamlit demo locally (model checkpoints will be fetched automatically upon startup)
-```shell
-pip install -r requirements_demo.txt
-streamlit run app.py
-```
-
-<p align="center"><img width="750" height="550" alt="Streamlit Demo" src="assets/space_demo.png"></p>
-
-## ✨ Implementation
-
-Our code is written in JAX/ Flax and mainly based upon [jaxnerf](https://github.com/google-research/google-research/tree/master/jaxnerf) from Google Research. The base code is highly optimized in GPU & TPU. For semantic consistency loss, we utilize pretrained CLIP Vision Transformer from [transformers](https://github.com/huggingface/transformers) library.  
-
-To learn more about DietNeRF, our experiments and implementation, you are highly recommended to check out our very detailed **[Notion write-up](https://www.notion.so/DietNeRF-Putting-NeRF-on-a-Diet-4aeddae95d054f1d91686f02bdb74745)**!
-
-<p align="center"><img width="600" height="800" alt="스크린샷 2021-07-04 오후 4 11 51" src="assets/report_thumbnail.png"></p> 
-
-
- 
 
 ## 💻 Installation
 
