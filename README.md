@@ -5,15 +5,13 @@
 <p align="center"><img width="450" alt="스크린샷 2021-07-04 오후 4 11 51" src="https://user-images.githubusercontent.com/77657524/126361638-4aad58e8-4efb-4fc5-bf78-f53d03799e1e.png"></p>
 
 Welcome to Putting NeRF on a Diet Project! 
-This project is the Pytorch, JAX/Flax based code implementation of this paper [Putting NeRF on a Diet : Ajay Jain, Matthew Tancik, Pieter Abbeel, Arxiv : https://arxiv.org/abs/2104.00677] 
-The model generates the novel view synthesis redering (NeRF: Neural Radiances Field) with Fewshot learning scheme.
-The semantic loss use the pre-trained CLIP Vision Transformer embedding. This information can give a 2D supervision for 3D.
-The Diet NeRF result outperforms the original NeRF in 3D reconstruction and neural rendering with only few images. 
+This project is a JAX/Flax based code implementation of the paper [Putting NeRF on a Diet](https://arxiv.org/abs/2104.00677). The model generates the novel view synthesis redering (NeRF: Neural Radiances Field) with Fewshot learning scheme.
+The semantic loss uses the pre-trained CLIP Vision Transformer embedding. This information can give a 2D supervision for 3D.
+The Diet NeRF result outperforms the original NeRF in 3D reconstruction and neural rendering with only few training images. 
 
 
-##  🤗 Hugging Face Hub Repo URL:
-We will also upload our project on the Hugging Face Hub Repository Also. 
-[https://huggingface.co/flax-community/putting-nerf-on-a-diet/](https://huggingface.co/flax-community/putting-nerf-on-a-diet/)
+##  🤗 Hugging Face Model Hub Repo
+You can also find our project on the [Hugging Face Model Hub Repository](https://huggingface.co/flax-community/putting-nerf-on-a-diet/).
 
 Our JAX/Flax implementation currently supports:
 
@@ -54,35 +52,31 @@ Our JAX/Flax implementation currently supports:
 
 - Streamlit Space Demo
 
-You can check our Streamlit Space demo on following site !
+You can check our [Streamlit Space demo](https://huggingface.co/spaces/flax-community/DietNerf-Demo).
 With any input camera pose, we can render the novel view synthesis.
-[https://huggingface.co/spaces/flax-community/DietNerf-Demo](https://huggingface.co/spaces/flax-community/DietNerf-Demo)
 
 - Colab Demo
 
-Moreover, we prapare the colab ipython notebook for you.
-You need colab pro account for running our model on the colab(For memory issue)
-[https://colab.research.google.com/drive/1etYeMTntw5mh3FvJv4Ubb7XUoTtt5J9G?usp=sharing
-](https://colab.research.google.com/drive/1etYeMTntw5mh3FvJv4Ubb7XUoTtt5J9G?usp=sharing
-)
+Moreover, we have also prapared a [Colab notebook](https://colab.research.google.com/drive/1etYeMTntw5mh3FvJv4Ubb7XUoTtt5J9G?usp=sharing).
+You need colab pro account for running our model on the colab (To avoid out-of-memory issue)
 
 ## 💻 Installation
 
 ```bash
 # Clone the repo
-svn export https://github.com/google-research/google-research/trunk/jaxnerf
+git clone https://github.com/codestella/putting-nerf-on-a-diet
 # Create a conda environment, note you can use python 3.6-3.8 as
 # one of the dependencies (TensorFlow) hasn't supported python 3.9 yet.
 conda create --name jaxnerf python=3.6.12; conda activate jaxnerf
 # Prepare pip
 conda install pip; pip install --upgrade pip
 # Install requirements
-pip install -r jaxnerf/requirements.txt
+pip install -r requirements.txt
 # [Optional] Install GPU and TPU support for Jax
 # Remember to change cuda101 to your CUDA version, e.g. cuda110 for CUDA 11.0.
-pip install --upgrade jax jaxlib==0.1.57+cuda101 -f https://storage.googleapis.com/jax-releases/jax_releases.html
+!pip install --upgrade jax "jax[cuda110]" -f https://storage.googleapis.com/jax-releases/jax_releases.html
 # install flax and flax-transformer
-pip install flax transformer[flax]
+pip install flax transformers[flax]
 ```
 
 ## ⚽ Dataset 
@@ -93,8 +87,7 @@ in the place you like. Let's assume they are placed under `/tmp/jaxnerf/data/`.
 
 ## 💖 Methods
 
-You can check more detail explaination about DietNeRF on following **Notion Report**
-* 👉👉 VEEEERY Detail DietNeRF Explaination Docs : https://www.notion.so/DietNeRF-Putting-NeRF-on-a-Diet-4aeddae95d054f1d91686f02bdb74745
+* 👉👉 You can check for VEEEERY detailed explaination about our project on [Notion Report](https://www.notion.so/DietNeRF-Putting-NeRF-on-a-Diet-4aeddae95d054f1d91686f02bdb74745)
 
 <p align="center"><img width="400" alt="스크린샷 2021-07-04 오후 4 11 51" src="https://user-images.githubusercontent.com/77657524/124376591-b312b780-dce2-11eb-80ad-9129d6f5eedb.png"></p> 
 
@@ -120,9 +113,9 @@ python -m train \
 ```
 You can toggle the semantic loss by “use_semantic_loss” in configuration files.
 
-## 💎 Expriment Result
+## 💎 Experimental Results
 
-### ❗ Rendered Rendering images by 8-shot learned Diet-NeRF
+### ❗ Rendered Rendering images by 8-shot learned DietNeRF
 
 DietNeRF has a strong capacity to generalise on novel and challenging views with EXTREMELY SMALL TRAINING SAMPLES!
 
@@ -180,12 +173,12 @@ Diet NeRF shows better quailty than Original NeRF when It is occluded.
 |------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | Project Managing | [Stella Yang](https://github.com/codestella) To Watch Our Project Progress, Please Check [Our Project Notion](https://www.notion.so/Putting-NeRF-on-a-Diet-e0caecea0c2b40c3996c83205baf870d) |
 | NeRF Team        | [Stella Yang](https://github.com/codestella), [Alex Lau](https://github.com/riven314), [Seunghyun Lee](https://github.com/sseung0703), [Hyunkyu Kim](https://github.com/minus31),  [Haswanth Aekula](https://github.com/hassiahk), [JaeYoung Chung](https://github.com/robot0321)          |
-| CLIP Team        | [Seunghyun Lee](https://github.com/sseung0703), [Sasikanth Kotti](https://github.com/ksasi), [Khali Sifullah](https://github.com/khalidsaifullaah) , [Sunghyun Kim](https://github.com/MrBananaHuman)                                |
-| Cloud TPU Team   | [Alex Lau](https://github.com/riven314), [Aswin Pyakurel](https://github.com/masapasa) , [JaeYoung Chung](https://github.com/robot0321),  [Sunghyun Kim](https://github.com/MrBananaHuman)                                                    |
+| CLIP Team        | [Seunghyun Lee](https://github.com/sseung0703), [Sasikanth Kotti](https://github.com/ksasi), [Khalid Sifullah](https://github.com/khalidsaifullaah) , [Sunghyun Kim](https://github.com/MrBananaHuman)                                |
+| Cloud TPU Team   | [Alex Lau](https://github.com/riven314), [Aswin Pyakurel](https://github.com/masapasa), [JaeYoung Chung](https://github.com/robot0321),  [Sunghyun Kim](https://github.com/MrBananaHuman)                                                    |
 
-* Extremely Don't Sleep Contributors 🤣 :  [Seunghyun Lee](https://github.com/sseung0703), [Alex Lau](https://github.com/riven314), [Stella Yang](https://github.com/codestella), [Haswanth Aekula](https://github.com/hassiahk)
+* Extremely Don't Sleep Contributors 🤣:  [Seunghyun Lee](https://github.com/sseung0703), [Alex Lau](https://github.com/riven314), [Stella Yang](https://github.com/codestella), [Haswanth Aekula](https://github.com/hassiahk)
 
-## 😎 What we improved from original JAX-NeRF : Innovation
+## 😎 What we improved from original JAX-NeRF: Innovation
  - Neural rendering with fewshot images
  - Hugging face CLIP based semantic loss loop
  - You can choose coarse mlp / coarse + fine mlp training
@@ -237,15 +230,14 @@ This project is based on “Putting NeRF on a Diet”.
 ## ❤️ Special Thanks 
 
 
-Our Project is started in the HuggingFace X GoogleAI (JAX) Community Week Event.
-https://discuss.huggingface.co/t/open-to-the-community-community-week-using-jax-flax-for-nlp-cv/7104
+Our Project is started in the [HuggingFace X GoogleAI (JAX) Community Week Event](https://discuss.huggingface.co/t/open-to-the-community-community-week-using-jax-flax-for-nlp-cv/7104).
 
 Thank you for our mentor Suraj and organizers in JAX/Flax Community Week! 
 Our team grows up with this community learning experience. It was wonderful time!
 
 <p align="center"><img width="250" alt="스크린샷 2021-07-04 오후 4 11 51" src="https://user-images.githubusercontent.com/77657524/126369170-5664076c-ac99-4157-bc53-b91dfb7ed7e1.jpeg"></p>
 
-Common Computer AI(https://comcom.ai/ko/) sponsored the multiple V100 GPUs for our project!
+[Common Computer AI](https://comcom.ai/en/) sponsored multiple V100 GPUs for our project!
 Thank you so much for your support!
 <p align="center"><img width="250" alt="스크린샷" src="./assets/comcom.jpeg"></p>
 
