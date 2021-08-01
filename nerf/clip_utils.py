@@ -6,7 +6,6 @@ from functools import partial
 import jax
 from jax import random
 import jax.numpy as jnp
-import numpy as np
 from transformers import FlaxCLIPModel
 
 from nerf import utils
