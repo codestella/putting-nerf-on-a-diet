@@ -62,6 +62,24 @@ streamlit run app.py
 
 <p align="center"><img width="1000" alt="Streamlit Demo" src="assets/space_demo.png"></p>
 
+## ✨ Methods
+
+* 👉👉 You can check VEEEERY detailed explanation about our project on [Notion Report](https://www.notion.so/DietNeRF-Putting-NeRF-on-a-Diet-4aeddae95d054f1d91686f02bdb74745)
+
+<p align="center"><img width="400" alt="스크린샷 2021-07-04 오후 4 11 51" src="https://user-images.githubusercontent.com/77657524/124376591-b312b780-dce2-11eb-80ad-9129d6f5eedb.png"></p> 
+
+Based on the principle
+that “a bulldozer is a bulldozer from any perspective”, Our proposed DietNeRF supervises the radiance field from arbitrary poses
+(DietNeRF cameras). This is possible because we compute a semantic consistency loss in a feature space capturing high-level
+scene attributes, not in pixel space. We extract semantic representations of renderings using the CLIP Vision Transformer, then
+maximize similarity with representations of ground-truth views. In
+effect, we use prior knowledge about scene semantics learned by
+single-view 2D image encoders to constrain a 3D representation.
+
+You can check detail information on the author's paper. Also, you can check the CLIP based semantic loss structure on the following image.
+<p align="center"><img width="600" alt="스크린샷 2021-07-04 오후 4 11 51" src="https://user-images.githubusercontent.com/77657524/126386709-a4ce7ff8-2a68-442f-b4ed-26971fb90e51.png"></p>
+
+Our code used JAX/FLAX framework for implementation. So that it can achieve much speed up than other NeRF codes. At last, our code used hugging face, transformer,  CLIP model library. 
 
 ## 💻 Installation
 
@@ -87,25 +105,6 @@ Download the datasets from the [NeRF official Google Drive](https://drive.google
 Please download the `nerf_synthetic.zip` and unzip them
 in the place you like. Let's assume they are placed under `/tmp/jaxnerf/data/`.
 
-
-## 💖 Methods
-
-* 👉👉 You can check VEEEERY detailed explanation about our project on [Notion Report](https://www.notion.so/DietNeRF-Putting-NeRF-on-a-Diet-4aeddae95d054f1d91686f02bdb74745)
-
-<p align="center"><img width="400" alt="스크린샷 2021-07-04 오후 4 11 51" src="https://user-images.githubusercontent.com/77657524/124376591-b312b780-dce2-11eb-80ad-9129d6f5eedb.png"></p> 
-
-Based on the principle
-that “a bulldozer is a bulldozer from any perspective”, Our proposed DietNeRF supervises the radiance field from arbitrary poses
-(DietNeRF cameras). This is possible because we compute a semantic consistency loss in a feature space capturing high-level
-scene attributes, not in pixel space. We extract semantic representations of renderings using the CLIP Vision Transformer, then
-maximize similarity with representations of ground-truth views. In
-effect, we use prior knowledge about scene semantics learned by
-single-view 2D image encoders to constrain a 3D representation.
-
-You can check detail information on the author's paper. Also, you can check the CLIP based semantic loss structure on the following image.
-<p align="center"><img width="600" alt="스크린샷 2021-07-04 오후 4 11 51" src="https://user-images.githubusercontent.com/77657524/126386709-a4ce7ff8-2a68-442f-b4ed-26971fb90e51.png"></p>
-
-Our code used JAX/FLAX framework for implementation. So that it can achieve much speed up than other NeRF codes. At last, our code used hugging face, transformer,  CLIP model library. 
 
 ## 🤟 How to Train
 1. Train in our prepared [Colab notebook](https://colab.research.google.com/drive/1etYeMTntw5mh3FvJv4Ubb7XUoTtt5J9G?usp=sharing): Colab Pro is recommended, otherwise you may encounter out-of-memory
