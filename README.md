@@ -66,9 +66,9 @@ streamlit run app.py
 
 Our code is written in JAX/ Flax and mainly based upon [jaxnerf](https://github.com/google-research/google-research/tree/master/jaxnerf) from Google Research. The base code is highly optimized in GPU & TPU. For semantic consistency loss, we utilize pretrained CLIP Vision Transformer from [transformers](https://github.com/huggingface/transformers) library.  
 
-To learn more about DietNeRF, our experiments and implementation, you are highly recommended to check out our very detailed [Notion write-up](https://www.notion.so/DietNeRF-Putting-NeRF-on-a-Diet-4aeddae95d054f1d91686f02bdb74745)!
+To learn more about DietNeRF, our experiments and implementation, you are highly recommended to check out our very detailed **[Notion write-up](https://www.notion.so/DietNeRF-Putting-NeRF-on-a-Diet-4aeddae95d054f1d91686f02bdb74745)**!
 
-<p align="center"><img width="400" alt="스크린샷 2021-07-04 오후 4 11 51" src="assets/report_thumbnail.png"></p> 
+<p align="center"><img width="600" height="800" alt="스크린샷 2021-07-04 오후 4 11 51" src="assets/report_thumbnail.png"></p> 
 
 
  
