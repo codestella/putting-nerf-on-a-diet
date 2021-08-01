@@ -1,0 +1,38 @@
+{
+    "Chair": {
+        "DIET_NERF_FILE_ID": "1Q2DtEoutDnc4BykOOlSM0-Yts7NTdA6c",
+        "NERF_FILE_ID": "1wVr6_54F8h_oxHX7epNRr99PKvO3oIt4",
+        "DIET_NERF_MODEL_NAME": "diet_nerf_chair",
+        "NERF_MODEL_NAME": "nerf_chair"
+    },
+    "Lego": {
+        "DIET_NERF_FILE_ID": "1UaUKgShJTKp5zNQdXvVhkyxgU-2YU3Ay",
+        "NERF_FILE_ID": "16_Mx_p7Sncbb5MoP7JypXAhvmfNfnOwf",
+        "DIET_NERF_MODEL_NAME": "diet_nerf_lego",
+        "NERF_MODEL_NAME": "nerf_lego"
+    },
+    "Ship": {
+        "DIET_NERF_FILE_ID": "1Eb4eZ9vn6FcbqLIaBoW-6NlyWr-y0eTW",
+        "NERF_FILE_ID": "1fkChM8-44uSsMcMu6XIFB33nXf58A-Il",
+        "DIET_NERF_MODEL_NAME": "diet_nerf_ship",
+        "NERF_MODEL_NAME": "nerf_ship"
+    },
+    "Hotdog": {
+        "DIET_NERF_FILE_ID": "1I_Gy2yeaaQrhX3IZ-jTpgHMP1eMp2Bxj",
+        "NERF_FILE_ID": "1dlevr64cEW83Ka7v1tWwzoycI3K95lPy",
+        "DIET_NERF_MODEL_NAME": "diet_nerf_hotdog",
+        "NERF_MODEL_NAME": "nerf_hotdog"
+    },
+    "Mic": {
+        "DIET_NERF_FILE_ID": "1vuyCAY8YKLo7OSlTpLJgMem47gJc1W2S",
+        "NERF_FILE_ID": "1JK3vu2F9xnOuhPjYVflMkPp0BcAc4w_9",
+        "DIET_NERF_MODEL_NAME": "diet_nerf_mic",
+        "NERF_MODEL_NAME": "nerf_mic"
+    },
+    "Drums": {
+        "DIET_NERF_FILE_ID": "11qpHv-LeiKtLcO3LwBsM9A0rz23IZdjS",
+        "NERF_FILE_ID": "1GVgD3WpCKOmWMLqTU5QMMcoXdPTq5vQk",
+        "DIET_NERF_MODEL_NAME": "diet_nerf_drums",
+        "NERF_MODEL_NAME": "nerf_drums"
+    }
+}

@@ -105,3 +105,9 @@ dmypy.json
 .pyre/
 # VS Code settings
 .vscode
+.idea
+*.ipynb_checkpoints
+
+__pycache__
+*/__pycache__/*
+models
