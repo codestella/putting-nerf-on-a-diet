@@ -9,8 +9,8 @@ DietNeRF is designed for rendering quality novel views in few-shot learning sche
 To achieve this, the author coins **Semantic Consistency Loss** to supervise DietNeRF by prior knowledge from CLIP Vision Transformer. Such supervision enables DietNeRF to learn 3D scene reconstruction with CLIP's prior knowledge on 2D views.  
 
 Besides this repo, you can check our write-up and demo here:
-- ✍️ **[Notion Write-up](https://steep-cycle-f6b.notion.site/DietNeRF-Putting-NeRF-on-a-Diet-4aeddae95d054f1d91686f02bdb74745)**: for more details of DietNeRF and our experiments
-- ✨ **[Hugging Face Space Demo](https://huggingface.co/spaces/flax-community/DietNerf-Demo)**: showcase our trained DietNeRFs by Streamlit
+- ✍️ **[Write-up in Notion](https://steep-cycle-f6b.notion.site/DietNeRF-Putting-NeRF-on-a-Diet-4aeddae95d054f1d91686f02bdb74745)**: more details of DietNeRF and our experiments
+- ✨ **[Demo in Hugging Face Space](https://huggingface.co/spaces/flax-community/DietNerf-Demo)**: showcase our trained DietNeRFs by Streamlit
 
 
 
@@ -53,11 +53,14 @@ Our JAX/Flax implementation currently supports:
 </table>
 
 ## 🤩 Demo
+1. You can check out [our demo in Hugging Face Space](https://huggingface.co/spaces/flax-community/DietNerf-Demo)
+2. Or you can set up our Streamlit demo locally (model checkpoints will be fetched automatically upon startup)
+```shell
+pip install -r requirements_demo.txt
+streamlit run app.py
+```
 
-- Streamlit Space Demo
-
-You can check our [Streamlit Space demo](https://huggingface.co/spaces/flax-community/DietNerf-Demo).
-With any input camera pose, we can render the novel view synthesis.
+<p align="center"><img width="600" alt="Streamlit Demo" src="assets/space_demo.png"></p>
 
 
 ## 💻 Installation
