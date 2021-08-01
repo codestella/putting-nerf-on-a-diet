@@ -20,7 +20,7 @@ pip install -r requirements_demo.txt
 streamlit run app.py
 ```
 
-<p align="center"><img width="450" height="550" alt="Streamlit Demo" src="assets/space_demo.png"></p>
+<p align="center"><img width="550" height="350" alt="Streamlit Demo" src="assets/space_demo.png"></p>
 
 ## ✨ Implementation
 
@@ -28,7 +28,7 @@ Our code is written in JAX/ Flax and mainly based upon [jaxnerf](https://github.
 
 To learn more about DietNeRF, our experiments and implementation, you are highly recommended to check out our very detailed **[Notion write-up](https://www.notion.so/DietNeRF-Putting-NeRF-on-a-Diet-4aeddae95d054f1d91686f02bdb74745)**!
 
-<p align="center"><img width="500" height="800" alt="스크린샷 2021-07-04 오후 4 11 51" src="assets/report_thumbnail.png"></p> 
+<p align="center"><img width="450" height="700" alt="스크린샷 2021-07-04 오후 4 11 51" src="assets/report_thumbnail.png"></p> 
 
 
  ##  🤗 Hugging Face Model Hub Repo
