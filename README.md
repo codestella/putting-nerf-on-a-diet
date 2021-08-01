@@ -60,7 +60,7 @@ pip install -r requirements_demo.txt
 streamlit run app.py
 ```
 
-<p align="center"><img width="600" alt="Streamlit Demo" src="assets/space_demo.png"></p>
+<p align="center"><img width="1000" alt="Streamlit Demo" src="assets/space_demo.png"></p>
 
 
 ## 💻 Installation
