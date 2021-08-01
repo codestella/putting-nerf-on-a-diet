@@ -171,17 +171,6 @@ DietNeRF shows better quality than Original NeRF when It is occluded.
 
 *_Special mention to our "night owl" contributors 🦉:  [Seunghyun Lee](https://github.com/sseung0703), [Alex Lau](https://github.com/riven314), [Stella Yang](https://github.com/codestella), [Haswanth Aekula](https://github.com/hassiahk)_
 
-## 😎 What we improved from original JAX-NeRF: Innovation
- - Neural rendering with fewshot images
- - Hugging face CLIP based semantic loss loop
- - You can choose coarse mlp / coarse + fine mlp training
-   (coarse + fine is on the `main` branch / coarse is on the `coarse_only` branch)
-    * coarse + fine : shows good geometric reconstruction
-    * coarse : shows good PSNR / SSIM result  
- - Make Video / GIF rendering result, `--generate_gif_only` arg can run fast rendering GIF.
- - Cleaning / refactoring the code 
- - Made multiple models / colab / space for nice demo
-
 ## 💞 Social Impact
 
  - Game Industry
