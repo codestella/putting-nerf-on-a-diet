@@ -5,7 +5,7 @@
 <p align="center"><img width="450" alt="스크린샷 2021-07-04 오후 4 11 51" src="https://user-images.githubusercontent.com/77657524/126361638-4aad58e8-4efb-4fc5-bf78-f53d03799e1e.png"></p>
 
 Welcome to Putting NeRF on a Diet Project! 
-This project is a JAX/Flax based code implementation of the paper [Putting NeRF on a Diet](https://arxiv.org/abs/2104.00677). The model generates the novel view synthesis redering (NeRF: Neural Radiances Field) with Fewshot learning scheme.
+This project is a JAX/Flax based code implementation of the paper [Putting NeRF on a Diet](https://arxiv.org/abs/2104.00677). The model generates the novel view synthesis rendering (NeRF: Neural Radiances Field) with Few-shot learning scheme.
 The semantic loss uses the pre-trained CLIP Vision Transformer embedding. This information can give a 2D supervision for 3D.
 The Diet NeRF result outperforms the original NeRF in 3D reconstruction and neural rendering with only few training images. 
 
@@ -87,7 +87,7 @@ in the place you like. Let's assume they are placed under `/tmp/jaxnerf/data/`.
 
 ## 💖 Methods
 
-* 👉👉 You can check for VEEEERY detailed explaination about our project on [Notion Report](https://www.notion.so/DietNeRF-Putting-NeRF-on-a-Diet-4aeddae95d054f1d91686f02bdb74745)
+* 👉👉 You can check VEEEERY detailed explanation about our project on [Notion Report](https://www.notion.so/DietNeRF-Putting-NeRF-on-a-Diet-4aeddae95d054f1d91686f02bdb74745)
 
 <p align="center"><img width="400" alt="스크린샷 2021-07-04 오후 4 11 51" src="https://user-images.githubusercontent.com/77657524/124376591-b312b780-dce2-11eb-80ad-9129d6f5eedb.png"></p> 
 
@@ -136,9 +136,9 @@ DietNeRF has a strong capacity to generalise on novel and challenging views with
 
 ### ❗ Rendered GIF by occluded 14-shot learned NeRF and Diet-NeRF
 
-We made aritificial occlusion on the right side of image (Only picked left side training poses).
+We made artificial occlusion on the right side of image (Only picked left side training poses).
 The reconstruction quality can be compared with this experiment.
-Diet NeRF shows better quailty than Original NeRF when It is occluded.
+DietNeRF shows better quality than Original NeRF when It is occluded.
 
 #### Training poses
 <img width="1400" src="https://user-images.githubusercontent.com/26036843/126111980-4f332c87-a7f0-42e0-a355-8e77621bbca4.png">
@@ -228,7 +228,6 @@ This project is based on “Putting NeRF on a Diet”.
 [Apache License 2.0](https://github.com/codestella/putting-nerf-on-a-diet/blob/main/LICENSE)
 
 ## ❤️ Special Thanks 
-
 
 Our Project is started in the [HuggingFace X GoogleAI (JAX) Community Week Event](https://discuss.huggingface.co/t/open-to-the-community-community-week-using-jax-flax-for-nlp-cv/7104).
 
