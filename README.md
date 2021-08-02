@@ -159,7 +159,7 @@ DietNeRF shows better quality than Original NeRF when It is occluded.
     <tr>
   </table></p>
 
-## 👨‍👧‍👦 Our Teams
+## 👨‍👧‍👦 Our Team
 
 
 | Teams            | Members                                                                                                                                                        |
@@ -169,7 +169,7 @@ DietNeRF shows better quality than Original NeRF when It is occluded.
 | CLIP Team        | [Seunghyun Lee](https://github.com/sseung0703), [Sasikanth Kotti](https://github.com/ksasi), [Khalid Sifullah](https://github.com/khalidsaifullaah) , [Sunghyun Kim](https://github.com/MrBananaHuman)                                |
 | Cloud TPU Team   | [Alex Lau](https://github.com/riven314), [Aswin Pyakurel](https://github.com/masapasa), [JaeYoung Chung](https://github.com/robot0321),  [Sunghyun Kim](https://github.com/MrBananaHuman)                                                    |
 
-*_Special mention to our "night owl" contributors 🦉:  [Seunghyun Lee](https://github.com/sseung0703), [Alex Lau](https://github.com/riven314), [Stella Yang](https://github.com/codestella), [Haswanth Aekula](https://github.com/hassiahk)_
+*Special mention to our "night owl" contributors 🦉:  [Seunghyun Lee](https://github.com/sseung0703), [Alex Lau](https://github.com/riven314), [Stella Yang](https://github.com/codestella), [Haswanth Aekula](https://github.com/hassiahk)
 
 ## 💞 Social Impact
 
