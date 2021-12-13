@@ -8,7 +8,7 @@ This project attempted to implement the paper **[Putting NeRF on a Diet](https:/
 DietNeRF is designed for rendering quality novel views in few-shot learning scheme, a task that vanilla NeRF (Neural Radiance Field) struggles.
 To achieve this, the author coins **Semantic Consistency Loss** to supervise DietNeRF by prior knowledge from CLIP Vision Transformer. Such supervision enables DietNeRF to learn 3D scene reconstruction with CLIP's prior knowledge on 2D views.  
 
-Besides this repo, you can check our write-up and demo here:
+Besides this repo, you can check our write-up, demo and presentations here:
 - ✍️ **[Write-up in Notion](https://steep-cycle-f6b.notion.site/DietNeRF-Putting-NeRF-on-a-Diet-4aeddae95d054f1d91686f02bdb74745)**: more details of DietNeRF and our experiments
 - ✨ **[Demo in Hugging Face Space](https://huggingface.co/spaces/flax-community/DietNerf-Demo)**: showcase our trained DietNeRFs by Streamlit
 - 🗣️ **[Presentation in GDG DevFest Hong Kong 2021](https://www.youtube.com/watch?v=8VYsDth0r48)**: a brief overview of our project and JAX & Hugging Face Spaces
